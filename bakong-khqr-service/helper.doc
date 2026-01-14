@@ -1,0 +1,33 @@
++++ Here is the step-by-step guide to installing these libraries. +++
+
++ Known About create and Active a Virtual Environment
+
+    python -m venv venv                 ### Run the following command. This creates a new subfolder (commonly named .venv or venv) 
+                                            that contains a self-contained Python installation.
+    
+    venv\Scripts\activate               ### To start using this isolated environment, you must "activate" 
+                                            it so your terminal knows to use the local Python version and not the system-wide one. 
+
+
+1. CREATE and Active a Virtual Environment
+Open your terminal in your project folder and run:
+
+    cd path/to/your/project_folder
+
+macOS/Linux:
+    python3 -m venv venv
+    source venv/bin/activate
+
+2. INSTALL the Libraries
+You can install all of them at once using pip. Copy and paste this command:
+
+    pip install fastapi uvicorn python-dotenv bakong-khqr pydantic qrcode pillow jinja2 python-multipart requests
+
+3. SAVE Your Dependencies
+Once installed, it is important to create a requirements.txt file. 
+This allows others (or your production server) to install the exact same versions later.
+
+    pip freeze > requirements.txt
+
+4.RUNNING Python
+    uvicorn main:app --reload --port 5001
