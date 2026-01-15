@@ -9,6 +9,7 @@ khqr = KHQR(os.getenv("BAKONG_TOKEN"))
 def generate_khqr(amount: int, order_id: str):
     return khqr.create_qr(
         bank_account=os.getenv("BANK_ACCOUNT"),
+        phone_number=os.getenv("BANK_PHONE_NUMBER"),
         merchant_name=os.getenv("MERCHANT_NAME"),
         merchant_city=os.getenv("MERCHANT_CITY"),
 
@@ -16,7 +17,6 @@ def generate_khqr(amount: int, order_id: str):
         currency="KHR",
 
         store_label="UrbanStore",     # Brand name store
-        phone_number="855977071227",  # Your phone number contact with Bakong Account
         terminal_label="T1",          
 
         bill_number=order_id,
