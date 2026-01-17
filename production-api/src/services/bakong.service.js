@@ -1,12 +1,21 @@
 import axios from "axios";
 import { BAKONG_SERVICE_URL } from "../config/bakong.js";
 
-console.log("Bakong Service URL =", BAKONG_SERVICE_URL); // 👈 ADD THIS
+console.log("Bakong Service URL =", BAKONG_SERVICE_URL);
 
 export const createBakongQR = async (orderId, amount) => {
   const res = await axios.post(
     `${BAKONG_SERVICE_URL}/create-qr`,
-    { orderId, amount }
+    {
+      order_id: orderId,   // ✅ FIXED
+      amount,
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
   );
+
   return res.data;
 };
