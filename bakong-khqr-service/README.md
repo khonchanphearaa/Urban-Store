@@ -17,6 +17,7 @@ NODE_API_BASE_URL=http://localhost:{{PORT}}/api/v1
 # {{PORT}} GET PORT Form production-api EXAMPLE: PORT=5052
 ```
 
+## Setup Enviroment project python
 1. Navigate to your project
 - Open the Terminal and use the cd (change directory) 
 
@@ -27,9 +28,17 @@ cd path/to/your/project_folder
 2. Create the Virtual Environment
 - Run the following command. This creates a new subfolder (commonly named .venv or venv) that contains a self-contained Python installation.
 
+#### For use macOS/Linux:
 ```bash
 python3 -m venv .venv
 ```
+
+#### For use Window
+```bash
+python -m venv
+```
+
+- Read more for detail info about ```venv``` [Python](https://docs.python.org/3/library/venv.html)
 
 3. Activate the Environment
 - To start using this isolated environment, you must "activate" it so your terminal knows to use the local Python version and not the system-wide one. 
@@ -44,6 +53,8 @@ source .venv/bin/activate
 uvicorn main:app --host 0.0.0.0 --port 5001
 ```
 
-*Note when run project again just command ```source .venv/bin/activate``` make sure in ```vue```
-and runing port ```uvicorn main:app --host 0.0.0.0 --port 5001``` For this port can choice your own.
+**Note when run project again just command ```source .venv/bin/activate``` make sure in ```vue``` active
+and runing port ```uvicorn main:app --host 0.0.0.0 --port 5001``` For this port ```5001``` can choice your own.
+
+- Read more setup env ```helper.doc```
 
