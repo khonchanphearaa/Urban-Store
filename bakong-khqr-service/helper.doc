@@ -17,6 +17,9 @@ Open your terminal in your project folder and run:
 macOS/Linux:
     python3 -m venv venv
     source venv/bin/activate
+    
+window
+    python -m venv
 
 2. INSTALL the Libraries
 You can install all of them at once using pip. Copy and paste this command:
