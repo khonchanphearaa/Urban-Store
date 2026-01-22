@@ -1,10 +1,17 @@
 import dotenv from "dotenv";
-dotenv.config(); // <-- MUST be called before using process.env
+/* USE process.env */
+dotenv.config();
+
 import app from "./src/app.js";
 import connectDB from "./src/config/db.js";
+import { startPaymentPolling } from "./src/jobs/payment.poller.js";
 
 const PORT = process.env.PORT;
-connectDB();
-app.listen(PORT, () =>{
-    console.log(`Server running on port ${PORT}`);
-})
+(async () => {
+    await connectDB();
+    startPaymentPolling();
+
+    app.listen(PORT, () => {
+        console.log(`Server running on PORT: ${PORT}`);
+    });
+});
