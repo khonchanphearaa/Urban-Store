@@ -7,7 +7,7 @@ export const createBakongQR = async (orderId, amount) => {
   const res = await axios.post(
     `${BAKONG_SERVICE_URL}/create-qr`,
     {
-      order_id: orderId,   // ✅ FIXED
+      order_id: orderId,   
       amount,
     },
     {

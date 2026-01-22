@@ -7,20 +7,22 @@ import {
   getProductById,
   updateProduct,
   deleteProduct,
+  addStock,
 } from "../controllers/product.controller.js";
 
 import { upload } from "../middlewares/upload.js"; // multer + Cloudinary storage
 
 const router = express.Router();
 
-/*  Public Routes (USER + ADMIN) */
+/*  Public Routes (USER With ADMIN) */
 router.get("/", getProducts);
 router.get("/:id", getProductById);
 
 /* Admin Only Routes */
-// Upload multiple images (max 5) directly to Cloudinary
 router.post("/", protect, isAdmin, upload.array("images", 5), createProduct);
 router.put("/:id", protect, isAdmin, upload.array("images", 5), updateProduct);
+router.post("/:id/add-stock", protect, isAdmin, addStock); 
 router.delete("/:id", protect, isAdmin, deleteProduct);
+
 
 export default router;

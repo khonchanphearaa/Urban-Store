@@ -1,50 +1,54 @@
-import Order from "../models/Order.js";
-import { generatePaymentHash } from "../utils/md5.js";
+import Order from "../models/Order";
+import Payment from "../models/Payment";
 
-const PAYMENT_TIMEOUT_MS = 10 * 60 * 1000; // ⏳ 10 minutes
+const AUTO_PAY_AFTER_MS = 60 * 1000; /* demo: 1 minute */
+const CANCEL_AFTER_MS = 10 * 60 * 100
 
 export const startPaymentPolling = () => {
+  console.log("PAYMENT Poller started!");
+
+  /* GET START TIMER */
   setInterval(async () => {
     try {
-      const pendingOrders = await Order.find({
+      const now = Date.now();
+
+      const orders = await Order.find({
         status: "PENDING",
         "payment.method": "BAKONG_KHQR",
       });
+      for (const order of orders) {
+        const elapsed_Timer = now - new Date(order.updatedAt).getTime();
 
-      for (const order of pendingOrders) {
-        const now = Date.now();
-        const createdAt = new Date(order.updatedAt).getTime();
-        const elapsed = now - createdAt;
-
-        // 🔴 TIMEOUT → AUTO CANCEL
-        if (elapsed > PAYMENT_TIMEOUT_MS) {
+        /* CANCEL PAYMENTs */
+        if (elapsed_Timer > CANCEL_AFTER_MS) {
           order.status = "CANCELLED";
           order.payment.status = "FAILED";
           await order.save();
 
-          console.log("⛔ Auto-cancel order:", order._id);
+          await Payment.updateOne(
+            { orderId: order._id },
+            { status: "FAILED" }
+          );
+          console.log("Cancel: ", order._id);
           continue;
         }
 
-        // 🔐 MD5 integrity check
-        const expectedHash = generatePaymentHash({
-          orderId: order._id.toString(),
-          amount: order.totalPrice,
-          currency: "KHR",
-        });
+        /* AUTO CHECK STATUS IF SUCCESS */
+        if (elapsed_Timer > AUTO_PAY_AFTER_MS) {
+          order.status = "PAID";
+          order.payment.status = "PAID";
+          order.isPaid = true;
+          await order.save();
 
-        if (order.payment.hash !== expectedHash) continue;
-
-        // ✅ AUTO MARK PAID (assumed success)
-        order.status = "PAID";
-        order.payment.status = "PAID";
-        order.isPaid = true;
-
-        await order.save();
-        console.log("✅ Auto-paid order:", order._id);
+          await Payment.updateOne(
+            { orderId: order._id },
+            { status: "PAID" }
+          );
+          console.log("Payment Paid: ", order._id);
+        }
       }
-    } catch (err) {
-      console.error("❌ Polling error:", err);
+    } catch (error) {
+      console.error("Polling Error: ", error);
     }
-  }, 30000); // 🔁 every 30 seconds
+  }, 15000);
 };

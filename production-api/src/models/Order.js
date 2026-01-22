@@ -2,14 +2,13 @@ import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema(
   {
-    // 👤 User who placed the order
+    /* USER */
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
 
-    // 🛒 Order items
     items: [
       {
         product: {
@@ -17,15 +16,14 @@ const orderSchema = new mongoose.Schema(
           ref: "Product",
         },
         name: String,
-        price: Number,      // KHR
+        price: Number,   // KHR
         quantity: Number,
       },
     ],
 
-    // 💰 Totals (KHR)
     totalPrice: {
       type: Number,
-      required: true,      // integer (KHR)
+      required: true, 
     },
 
     totalQuantity: {
@@ -33,7 +31,28 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
-    // 📦 Delivery info
+    discount: {
+      type: {
+        type: String,
+        enum: ["NONE", "FIXED", "PERCENT"],
+        default: "NONE",
+      },
+      value: {
+        type: Number, 
+        default: 0,
+      },
+      amount: {
+        type: Number, 
+        default: 0,
+      },
+    },
+
+    /*  FINAL PAYABLE AMOUNT  */
+    finalAmount: {
+      type: Number,
+      required: true, 
+    },
+
     deliveryAddress: {
       type: String,
       required: true,
@@ -44,14 +63,13 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
-    // 💳 Payment method
     paymentMethod: {
       type: String,
       enum: ["BAKONG_KHQR"],
       default: "BAKONG_KHQR",
     },
 
-    // 💳 Payment details (Bakong)
+    /* Payment INFO */
     payment: {
       method: {
         type: String,
@@ -67,27 +85,19 @@ const orderSchema = new mongoose.Schema(
         default: "KHR",
       },
       amount: {
-        type: Number, // same as totalPrice
+        type: Number, 
       },
-      qrString: {
-        type: String, // KHQR string
-      },
-      hash:{
-        type: String, /* md5 */
-      },
-      txHash: {
-        type: String, // Bakong transaction hash (later)
-      },
+      qrString: String,
+      hash: String, // MD5 
+      txHash: String,
     },
 
-    // 📌 Order status
     status: {
       type: String,
       enum: ["PENDING", "PAID", "CANCELLED"],
       default: "PENDING",
     },
 
-    // ✅ Payment flag
     isPaid: {
       type: Boolean,
       default: false,

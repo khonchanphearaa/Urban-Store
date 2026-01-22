@@ -2,18 +2,31 @@ import mongoose from "mongoose";
 import Order from "../models/Order.js";
 import Cart from "../models/Cart.js";
 import Product from "../models/Product.js";
+import { orderResponse } from "../utils/orderResponse.js";
 
 export const createOrder = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const { deliveryAddress, phoneNumber, paymentMethod } = req.body;
+    const {
+      deliveryAddress,
+      phoneNumber,
+      paymentMethod,
+      discountPercent = 0,
+    } = req.body;
 
     if (!deliveryAddress || !phoneNumber) {
       return res
         .status(400)
         .json({ message: "Delivery address and phone number are required!" });
+    }
+
+    // Validate percent
+    if (discountPercent < 0 || discountPercent > 100) {
+      return res
+        .status(400)
+        .json({ message: "Discount percent must be between 0 and 100" });
     }
 
     const cart = await Cart.findOne({ user: req.user._id })
@@ -30,7 +43,6 @@ export const createOrder = async (req, res) => {
 
     for (const item of cart.items) {
       const product = await Product.findById(item.product._id).session(session);
-
       if (!product) throw new Error("Product not found!");
 
       if (item.quantity > product.stock) {
@@ -49,24 +61,50 @@ export const createOrder = async (req, res) => {
 
       orderItems.push({
         product: product._id,
-        quantity,
         price,
+        quantity,
       });
 
       totalPrice += price * quantity;
       totalQuantity += quantity;
     }
 
-    const order = await Order.create(
+    // STATIC PERCENT DISCOUNT
+    const discountAmount = Math.floor(
+      (totalPrice * discountPercent) / 100
+    );
+
+    // FINAL PAYABLE AMOUNT
+    const finalAmount = totalPrice - discountAmount;
+
+    // CREATE ORDER
+    const [order] = await Order.create(
       [
         {
           user: req.user._id,
           items: orderItems,
           totalPrice,
           totalQuantity,
+
+          discount: {
+            type: "PERCENT",
+            value: discountPercent,
+            amount: discountAmount,
+          },
+
+          finalAmount,
+
           deliveryAddress,
           phoneNumber,
           paymentMethod: paymentMethod || "BAKONG_KHQR",
+
+          payment: {
+            method: "BAKONG_KHQR",
+            status: "PENDING",
+            currency: "KHR",
+            amount: finalAmount,
+          },
+
           status: "PENDING",
           isPaid: false,
         },
@@ -74,14 +112,24 @@ export const createOrder = async (req, res) => {
       { session }
     );
 
+    /* Clear cart */
     await Cart.deleteOne({ user: req.user._id }).session(session);
 
     await session.commitTransaction();
     session.endSession();
 
+    // CLEAN RESPONSE
     res.status(201).json({
+      success: true,
       message: "Order created successfully",
-      order: order[0],
+      order: {
+        orderId: order._id,
+        totalPrice,
+        discountPercent,
+        discountAmount,
+        finalAmount,
+        status: order.status,
+      },
     });
   } catch (error) {
     await session.abortTransaction();
@@ -102,26 +150,21 @@ export const getUserOrders = async (req, res) => {
   }
 };
 
-// Get Order by ID (USER/ADMIN)
+/* GET orderbyID */
 export const getOrderById = async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id).populate("items.product");
+  const order = await Order.findById(req.params.id);
 
-    if(!order){
-      return res.status(404).json({message: "Order not found"});
-    }
-    /* USER can only view their own orders */
-    if(req.user.role === "USER" && order.user.toString() !== req.user._id.toString()){
-      return res.status(403).json({message: "Access denied"});
-    }
-    
-    res.json({ message: "Order fetched", order });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
+  if (!order) {
+    return res.status(404).json({ message: "Order not found" });
   }
+  res.json({
+    success: true,
+    order: orderResponse(order),
+  });
 };
 
-// Update Order Status (Admin)
+
+// UPDATE Order Status (Admin)
 export const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
