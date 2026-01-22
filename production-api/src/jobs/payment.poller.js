@@ -1,5 +1,5 @@
-import Order from "../models/Order";
-import Payment from "../models/Payment";
+import Order from "../models/Order.js";
+import Payment from "../models/Payment.js";
 
 const AUTO_PAY_AFTER_MS = 60 * 1000; /* demo: 1 minute */
 const CANCEL_AFTER_MS = 10 * 60 * 100
