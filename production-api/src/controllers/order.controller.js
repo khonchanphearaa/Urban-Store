@@ -13,7 +13,7 @@ export const createOrder = async (req, res) => {
     discountPercent = 0,
   } = req.body;
 
-  // ✅ VALIDATE FIRST (before transaction)
+  // VALIDATE FIRST (before transaction)
   if (!deliveryAddress || !phoneNumber) {
     return res.status(400).json({
       message: "Delivery address and phone number are required",
@@ -123,17 +123,6 @@ export const getUserOrders = async (req, res) => {
   res.json({ success: true, orders });
 };
 
-
-
-// Get User Orders (USER)
-// export const getUserOrders = async (req, res) => {
-//   try {
-//     const orders = await Order.find({ user: req.user._id }).populate("items.product");
-//     res.json({ message: "Orders fetched", orders });
-//   } catch (error) {
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };
 
 /* GET orderbyID */
 export const getOrderById = async (req, res) => {
