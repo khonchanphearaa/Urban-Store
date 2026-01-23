@@ -44,7 +44,7 @@ python -m venv
 - To start using this isolated environment, you must "activate" it so your terminal knows to use the local Python version and not the system-wide one. 
 
 ```bash
-source .venv/bin/activate
+source venv/bin/activate
 ```
 
 4. Run Python bakong-khqr

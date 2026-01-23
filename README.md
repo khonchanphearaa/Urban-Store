@@ -11,7 +11,7 @@ This backend API is design tp support a modern e-commerce application (Web/Mobil
 - Product & Category management
 - Shopping cart system
 - Cart & Order processing
-- Payment intergration (Bakong static khqr)
+- Payment intergration Dynamic ```bakong-khqr```
 - Admin control $ role-based access
 - Admin & user roles
 - Rate limiting & validation
