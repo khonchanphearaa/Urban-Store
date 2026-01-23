@@ -12,18 +12,16 @@ COPY production-api/package*.json ./production-api/
 RUN cd production-api && npm install --production
 
 # ---------- PYTHON ----------
-COPY bakong-python-service/requirements.txt ./bakong-python-service/
-RUN pip3 install --no-cache-dir -r bakong-python-service/requirements.txt
+COPY bakong-khqr-service/requirements.txt ./bakong-khqr-service/
+RUN pip3 install --no-cache-dir -r bakong-khqr-service/requirements.txt
 
-# ---------- SOURCE ----------
+# ---------- COPY SOURCE ----------
 COPY production-api ./production-api
-COPY bakong-python-service ./bakong-python-service
+COPY bakong-khqr-service ./bakong-khqr-service
 
-# Render exposes this port
 EXPOSE 3000
 
-# Start Python (8000) + Node (3000)
 CMD sh -c "\
-  uvicorn bakong-python-service.main:app --host 0.0.0.0 --port 8000 & \
+  uvicorn bakong-khqr-service.main:app --host 0.0.0.0 --port 8000 & \
   node production-api/server.js \
 "
