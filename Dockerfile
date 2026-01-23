@@ -13,9 +13,10 @@ RUN cd production-api && npm install --production
 
 # ---------- PYTHON ----------
 COPY bakong-khqr-service/requirements.txt ./bakong-khqr-service/
-RUN pip3 install --no-cache-dir -r bakong-khqr-service/requirements.txt
+RUN pip3 install --no-cache-dir --break-system-packages \
+    -r bakong-khqr-service/requirements.txt
 
-# ---------- COPY SOURCE ----------
+# ---------- SOURCE ----------
 COPY production-api ./production-api
 COPY bakong-khqr-service ./bakong-khqr-service
 
