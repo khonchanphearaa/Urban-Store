@@ -7,8 +7,9 @@ import base64
 import qrcode
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
+from starlette.templating import Jinja2Templates
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
 from bakong import generate_khqr
 
@@ -57,10 +58,11 @@ def fetch_payment_info(order_id: str):
 #             "expires_at": expires_at
 #         }
 #     )
-@router.post("/create-qr")
-def create_qr(payload: dict):
-    order_id = payload["order_id"]
-    amount = payload["amount"]
+class QRRequest(BaseModel):
+    order_id: str
+    amount: int
 
-    qr_string = generate_khqr(amount, order_id)
+@router.post("/create-qr")
+def create_qr(payload: QRRequest):
+    qr_string = generate_khqr(payload.amount, payload.order_id)
     return { "qr_string": qr_string }

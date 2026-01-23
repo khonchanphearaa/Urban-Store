@@ -1,13 +1,24 @@
+import os
 from dotenv import load_dotenv
+from bakong_khqr import KHQR
+
 load_dotenv()
 
-from fastapi import FastAPI
-from bakong_khqr_service.routes.qr_routes import router
+khqr = KHQR(os.getenv("BAKONG_TOKEN"))
 
-app = FastAPI(title="Bakong KHQR Service")
+def generate_khqr(amount: int, order_id: str):
+    return khqr.create_qr(
+        bank_account=os.getenv("BANK_ACCOUNT"),
+        phone_number=os.getenv("BANK_PHONE_NUMBER"),
+        merchant_name=os.getenv("MERCHANT_NAME"),
+        merchant_city=os.getenv("MERCHANT_CITY"),
 
-app.include_router(router)
+        amount=int(amount),           
+        currency="KHR",
 
-@app.get("/")
-def health():
-    return {"status": "Bakong service running"}
+        store_label="UrbanStore",     # Brand name store
+        terminal_label="T1",          
+
+        bill_number=order_id,
+        static=False
+   )

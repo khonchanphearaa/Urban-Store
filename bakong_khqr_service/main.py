@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI
-from bakong_khqr_service.routes.qr_routes import router
+from routes.qr_routes import router
 
 app = FastAPI(title="Bakong KHQR Service")
 
