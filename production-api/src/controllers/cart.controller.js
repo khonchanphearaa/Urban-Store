@@ -20,46 +20,50 @@ export const addToCart = async (req, res) => {
     let { productId, quantity } = req.body;
     quantity = Number(quantity) || 1;
 
+    console.log("ADD CART USER:", req.user._id);
+
     const product = await Product.findById(productId);
-    if (!product) return res.status(404).json({ message: "Product not found" });
+    if (!product)
+      return res.status(404).json({ message: "Product not found" });
+
+    if (quantity > product.stock)
+      return res.status(400).json({ message: "Not enough stock available" });
 
     let cart = await Cart.findOne({ user: req.user._id });
 
-    /* alert quanity cart if > stock product (Stock check) */
     if (!cart) {
-      if (quantity > product.stock) {
-        return res.status(400).json({ message: "Not enough stock avaliable!" });
-      }
-
-      cart = await Cart.create({
+      cart = new Cart({
         user: req.user._id,
-        items: [{ product: productId, quantity }],
+        items: [],
       });
-    } else {
-      const item = cart.items.find((i) => i.product.toString() === productId);
-      if (item) {
-        /* fix: if qty > stock */
-        if (item.quantity + quantity > product.stock)
-          return res
-            .status(400)
-            .json({ message: "Quantity exceeds avaliable stock!" });
-        item.quantity += quantity;
-      } else {
-        /* check: status qty */
-        if (quantity > product.stock)
-          return res
-            .status(400)
-            .json({ message: "Not enough stock avaliable!" });
-        cart.items.push({ product: productId, quantity });
-      }
-      await cart.save();
     }
 
-    res.json({ message: "Item added to cart", cart });
+    const item = cart.items.find(
+      (i) => i.product.toString() === productId
+    );
+
+    if (item) {
+      if (item.quantity + quantity > product.stock)
+        return res.status(400).json({
+          message: "Quantity exceeds available stock",
+        });
+      item.quantity += quantity;
+    } else {
+      cart.items.push({ product: productId, quantity });
+    }
+
+    await cart.save();
+
+    res.json({
+      message: "Item added to cart",
+      cart,
+    });
   } catch (error) {
+    console.error("ADD CART ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // UPDATE Cart Item
 export const updateCartItem = async (req, res) => {

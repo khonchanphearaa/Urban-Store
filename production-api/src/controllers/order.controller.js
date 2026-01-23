@@ -4,37 +4,38 @@ import Cart from "../models/Cart.js";
 import Product from "../models/Product.js";
 import { orderResponse } from "../utils/orderResponse.js";
 
+/* CREATE ORDER */
 export const createOrder = async (req, res) => {
+  const {
+    deliveryAddress,
+    phoneNumber,
+    paymentMethod,
+    discountPercent = 0,
+  } = req.body;
+
+  // ✅ VALIDATE FIRST (before transaction)
+  if (!deliveryAddress || !phoneNumber) {
+    return res.status(400).json({
+      message: "Delivery address and phone number are required",
+    });
+  }
+
+  if (discountPercent < 0 || discountPercent > 100) {
+    return res.status(400).json({
+      message: "Discount percent must be between 0 and 100",
+    });
+  }
+
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const {
-      deliveryAddress,
-      phoneNumber,
-      paymentMethod,
-      discountPercent = 0,
-    } = req.body;
-
-    if (!deliveryAddress || !phoneNumber) {
-      return res
-        .status(400)
-        .json({ message: "Delivery address and phone number are required!" });
-    }
-
-    // Validate percent
-    if (discountPercent < 0 || discountPercent > 100) {
-      return res
-        .status(400)
-        .json({ message: "Discount percent must be between 0 and 100" });
-    }
-
     const cart = await Cart.findOne({ user: req.user._id })
       .populate("items.product")
       .session(session);
 
     if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ message: "Cart is empty" });
+      throw new Error("Cart is empty");
     }
 
     let totalPrice = 0;
@@ -43,7 +44,7 @@ export const createOrder = async (req, res) => {
 
     for (const item of cart.items) {
       const product = await Product.findById(item.product._id).session(session);
-      if (!product) throw new Error("Product not found!");
+      if (!product) throw new Error("Product not found");
 
       if (item.quantity > product.stock) {
         throw new Error(`Not enough stock for ${product.name}`);
@@ -52,32 +53,23 @@ export const createOrder = async (req, res) => {
       product.stock -= item.quantity;
       await product.save({ session });
 
-      const price = Number(product.price);
-      const quantity = Number(item.quantity);
-
-      if (Number.isNaN(price) || Number.isNaN(quantity)) {
-        throw new Error("Invalid product price or quantity");
-      }
-
       orderItems.push({
         product: product._id,
-        price,
-        quantity,
+        name: product.name,
+        price: product.price,
+        quantity: item.quantity,
       });
 
-      totalPrice += price * quantity;
-      totalQuantity += quantity;
+      totalPrice += product.price * item.quantity;
+      totalQuantity += item.quantity;
     }
 
-    // STATIC PERCENT DISCOUNT
     const discountAmount = Math.floor(
       (totalPrice * discountPercent) / 100
     );
 
-    // FINAL PAYABLE AMOUNT
     const finalAmount = totalPrice - discountAmount;
 
-    // CREATE ORDER
     const [order] = await Order.create(
       [
         {
@@ -85,26 +77,21 @@ export const createOrder = async (req, res) => {
           items: orderItems,
           totalPrice,
           totalQuantity,
-
           discount: {
             type: "PERCENT",
             value: discountPercent,
             amount: discountAmount,
           },
-
           finalAmount,
-
           deliveryAddress,
           phoneNumber,
           paymentMethod: paymentMethod || "BAKONG_KHQR",
-
           payment: {
             method: "BAKONG_KHQR",
             status: "PENDING",
             currency: "KHR",
             amount: finalAmount,
           },
-
           status: "PENDING",
           isPaid: false,
         },
@@ -112,24 +99,16 @@ export const createOrder = async (req, res) => {
       { session }
     );
 
-    /* Clear cart */
-    await Cart.deleteOne({ user: req.user._id }).session(session);
+    await Cart.deleteOne({ user: req.user._id }, { session });
 
     await session.commitTransaction();
     session.endSession();
 
-    // CLEAN RESPONSE
     res.status(201).json({
       success: true,
       message: "Order created successfully",
-      order: {
-        orderId: order._id,
-        totalPrice,
-        discountPercent,
-        discountAmount,
-        finalAmount,
-        status: order.status,
-      },
+      orderId: order._id,
+      finalAmount,
     });
   } catch (error) {
     await session.abortTransaction();
@@ -138,17 +117,23 @@ export const createOrder = async (req, res) => {
   }
 };
 
+/* GET USER ORDERS */
+export const getUserOrders = async (req, res) => {
+  const orders = await Order.find({ user: req.user._id });
+  res.json({ success: true, orders });
+};
+
 
 
 // Get User Orders (USER)
-export const getUserOrders = async (req, res) => {
-  try {
-    const orders = await Order.find({ user: req.user._id }).populate("items.product");
-    res.json({ message: "Orders fetched", orders });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
+// export const getUserOrders = async (req, res) => {
+//   try {
+//     const orders = await Order.find({ user: req.user._id }).populate("items.product");
+//     res.json({ message: "Orders fetched", orders });
+//   } catch (error) {
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
 
 /* GET orderbyID */
 export const getOrderById = async (req, res) => {

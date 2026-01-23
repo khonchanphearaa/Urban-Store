@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema(
   {
-    /* USER */
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -14,22 +13,16 @@ const orderSchema = new mongoose.Schema(
         product: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Product",
+          required: true,
         },
         name: String,
-        price: Number,   // KHR
+        price: Number,
         quantity: Number,
       },
     ],
 
-    totalPrice: {
-      type: Number,
-      required: true, 
-    },
-
-    totalQuantity: {
-      type: Number,
-      required: true,
-    },
+    totalPrice: { type: Number, required: true },
+    totalQuantity: { type: Number, required: true },
 
     discount: {
       type: {
@@ -37,31 +30,14 @@ const orderSchema = new mongoose.Schema(
         enum: ["NONE", "FIXED", "PERCENT"],
         default: "NONE",
       },
-      value: {
-        type: Number, 
-        default: 0,
-      },
-      amount: {
-        type: Number, 
-        default: 0,
-      },
+      value: { type: Number, default: 0 },
+      amount: { type: Number, default: 0 },
     },
 
-    /*  FINAL PAYABLE AMOUNT  */
-    finalAmount: {
-      type: Number,
-      required: true, 
-    },
+    finalAmount: { type: Number, required: true },
 
-    deliveryAddress: {
-      type: String,
-      required: true,
-    },
-
-    phoneNumber: {
-      type: String,
-      required: true,
-    },
+    deliveryAddress: { type: String, required: true },
+    phoneNumber: { type: String, required: true },
 
     paymentMethod: {
       type: String,
@@ -69,26 +45,17 @@ const orderSchema = new mongoose.Schema(
       default: "BAKONG_KHQR",
     },
 
-    /* Payment INFO */
     payment: {
-      method: {
-        type: String,
-        default: "BAKONG_KHQR",
-      },
+      method: String,
       status: {
         type: String,
         enum: ["PENDING", "PAID", "FAILED"],
         default: "PENDING",
       },
-      currency: {
-        type: String,
-        default: "KHR",
-      },
-      amount: {
-        type: Number, 
-      },
+      currency: { type: String, default: "KHR" },
+      amount: Number,
       qrString: String,
-      hash: String, // MD5 
+      hash: String,
       txHash: String,
     },
 
@@ -98,10 +65,7 @@ const orderSchema = new mongoose.Schema(
       default: "PENDING",
     },
 
-    isPaid: {
-      type: Boolean,
-      default: false,
-    },
+    isPaid: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

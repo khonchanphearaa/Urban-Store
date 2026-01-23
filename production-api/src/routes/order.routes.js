@@ -1,6 +1,7 @@
 import express from "express";
 import { protect } from "../middlewares/auth.middleware.js";
 import { isAdmin } from "../middlewares/admin.middleware.js";
+import { isUser } from "../middlewares/user.middleware.js";
 import {
   createOrder,
   getUserOrders,
@@ -14,9 +15,9 @@ const router = express.Router();
 router.use(protect); 
 
 // User routes
-router.post("/", createOrder);
-router.get("/", getUserOrders);
-router.get("/:id", getOrderById);
+router.post("/",isUser, createOrder);
+router.get("/", isUser, getUserOrders);
+router.get("/:id", isUser, getOrderById);
 
 // Admin route to update status
 router.put("/:id", isAdmin, updateOrderStatus);
