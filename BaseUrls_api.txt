@@ -1,0 +1,47 @@
+## Decoupled architecture 
+    ``` Base URLs ```serve as the foundational address that allow your Fronted
+    Node.js Backend, and Python Service to talk to each other.
+
+Deployed on (Render), URLs will change from [localhost] to production grade HTTPs links.
+
+1. The Fronted Base URLs (Client-Side)
+This is what user sees in theri. It communications with your Node.js API
+    @@ Production: https://urban-store-6gj1.onrender.com
+    @@ Purpose: Used by the fronted (React/Vue/Mobile) to send login credentials, fetch products, and submit orders.
+
+2. The Node.js API Base URL (Server-Side)
+If your backend is hosted separately or under a specific route, this is the root for all business logic.
+    @@ Internal Routing Version One: /api/v1 
+    @@ Endpoint Production: 
+
+        Endpoint	        Method	        Description
+        /api/v1/auth	    POST/GET	    Register, login users
+        /api/v1/products	GET	Get         All products
+        /api/v1/products	POST	        Create a product (form-data for images)
+        /api/v1/categories	GET/POST	    Categories
+        /api/v1/cart	    GET/POST	    Cart actions
+        /api/v1/orders	    GET/POST	    Orders
+        /api/v1/payments	POST	        Payment processing [FAST api] From bakong-khqr-service
+
+3. The Python Service Base URL (Decoupled architecture )
+This is a private or internal URL. Your frontend usually never talks to this directly. Only your Node.js server talks to it.
+    @@ production: https://bakong-service-xxx.onrender.com
+    @@ Purpose: Handles KHQR generation and Bakong blockchain verification.
+
+4. Configuration in Code
+To keep your project flexible, you should never "hard-code" these URLs. Instead, use your (.env) files
+
+    In (production-api/src/config/bakong.js)
+    @@This tells Node.js where the python service lives
+
+    cconst BAKONG_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000';
+    export default BAKONG_SERVICE_URL;onst
+
+    In (bakong-python-service/main.py)
+    @@FastAPI needs to know which domains are allowed to talk to it (CORS)
+
+    origins = [
+        "https://urban-store-6gj1.onrender.com",    # Your Node Backend
+        "http://localhost:3000",                    # Local Frontend
+    ]
+
