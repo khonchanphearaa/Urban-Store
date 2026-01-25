@@ -109,7 +109,7 @@ npm run dev
 - Add token to Authorization header
 
 ## isAdmin running local
-file the root project
+file the root project for access provider is ``` Admin ```
 
 ```bash
 node adminSeed.js
@@ -118,7 +118,7 @@ node adminSeed.js
 ## Render deploy server
 
 
-Render this URL: ``` https://ecommerce-api-ddhr.onrender.com ```
+Render this URL: ``` https://urban-store-6gj1.onrender.com ```
 
 Json running:
 
@@ -129,6 +129,7 @@ Json running:
 ```
 
 ## Several API Endpoints
+This endPoint connect with the Base URLs ``` https://urban-store-6gj1.onrender.com ```
 
 | Endpoint             | Method   | Description                             |
 | -------------------- | -------- | --------------------------------------- |

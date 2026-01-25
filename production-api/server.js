@@ -12,6 +12,6 @@ const PORT = process.env.PORT || 5050;
   startPaymentPolling();
 
   app.listen(PORT, () => {
-    console.log(`🚀 Server running on PORT: ${PORT}`);
+    console.log(`Server running PORT: ${PORT}`);
   });
-})(); // 🔥 THIS WAS MISSING
+})(); 
