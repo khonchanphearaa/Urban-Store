@@ -1,0 +1,115 @@
+Building a project with this structure requires a specific order of operations to ensure both the
+Node.js (Express) and Python (FastAPI) services can communications correctly.
+
+Here this to recreating this architecture from scratch.
+
+Phase 1. Initial Workspace SETUP Follow CLI.
+Open your intermial and create the root directory and the two main service folders.
+
+    mkdir ecommerce-api
+    cd ecommerce-api
+    mkdir production-api bakong-python-service
+    touch README.md LICENSE
+
+Phase 2. Setting up the Node.js Backend (production-api)
+This service follows a Controller-Service-Modal pattern.
+
+    1.Initialize Node.js
+    
+    cd production-api
+    npm init-y
+    npm install express mongoose dotenv cors axios jsonwebtoken bcryptjs multer cloudinary express-rate-limit
+
+    2. Create Folder Structure
+
+    mkdir -p src/{config,controllers,jobs,middlewares,models,routes,services,utils,validators} touch server.js src/app.js .env
+
+    3. Key Highlights for this SETUP
+        - src/service/bakong.service.js : This is where you will use (axios) to call the Python service.
+        - src/jobs/bakong.poller.js : Use (node-cron )or a simple (setInterval) here to check payments status periodically.
+        - src/config/bakong.js: Store the base URL of your Python service (e.g., http://localhost:8000).
+
+Phase 3. Setting up the Python Bakong Service (bakong-python-service)
+This service handles the specific Bakong-khqr generation logic, likely utilizing the Bakong SDK or cryptographic libraries.
+
+    Requirements Python
+    --check the version:
+    ## On Linux/Mac: python3 --version
+    ## On Windows: python --version
+
+    1. Initialize Python Enviroment
+
+    cd ../bakong-python-service
+
+    #On Linux/Mac: python -m venv venv
+    # On Windows: venv\Scripts\activate
+
+    source venv/bin/activate
+
+    2. Install Dependencies
+
+    pip install fastapi uvicorn requests python-dotenv pydantic
+
+    3. Create Folder Structure
+
+    mkdir routes services
+    touch main.py bakong.py .env requirements.txt
+
+    4. Key Highlights for this setup
+        - main.py: The entry point for (FASTAPI)
+        - bakong.py: This logic and package libraries bakong-khqr SDKm KHQR string and CRC16 validations.
+    
+Phase 4. Data Flow Visualization
+Understanding how these two interact is crucial config.
+
+    How the connect:
+        1. Request: User clicks Pay --> Node.js payment.controller.js
+        2. Communications: Node.js (bakong.service.js) sends a POST requests to (python qr_routes.py)
+            ** Note: For qr_routes is down is progress fix.
+            JUST to generate qrcode with website ``` https://qr.gov.kh/en/ ``` for get khqrstring from payments success.
+        3. Generation: Python generates the KHQR and returns the string/image to Node.jser
+        4. Polling: Node.js (bakong.poller.js) asks the Python service every few seconds if the transaction hash is successful.
+
+### Summary Checklist
+
+Before you start coding, ensure your (.env) files are ready.
+
+    [Node.js .env]
+
+    - PORT=YOUR_PORT    #Example 5051
+    - MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/your_db_name
+    - CLOUDINARY_CLOUD_NAME=da...@###
+    - CLOUDINARY_API_KEY=74619....@###
+    - CLOUDINARY_API_SECRET=rm4rr.....@###
+    - STRIPE_SECRET_KEY=sk_test_51ShuZV.....@###
+    - JWT_ACCESS_SECRET=acces....@###
+    - JWT_REFRESH_SECRET=refre....@###
+
+    PYTHON_BAKONG_URL=http://localhost:{{PORT}} # {{PORT}} Is port from bakong-khqr-service
+
+    # Admin Authenication
+    ADMIN_EMAIL=example@gmail.com
+    ADMIN_PASSWORD=12...@###
+
+    # Admin expireIn
+    JWT_ADMIN_SECRET=myS....@###
+    JWT_EXPRESIN=A_DAY_EXPRESIN     # Example 1d, 2d,..
+
+    [Python .env]
+
+    BAKONG_TOKEN=eyJhbGey.....@###     # Register with Bakong Open API ``` https://api-bakong.nbc.gov.kh/ ```
+    MERCHANT_NAME=YOUR_BRAND_STORE  
+    MERCHANT_CITY=ADDRESS_CITY         #default: Phnom Penh
+    BANK_ACCOUNT=YOUR_MERCHANT_ID  
+    BANK_PHONE_NUMBER=855123456        #Phone number contact with Bakong account app
+
+    NODE_API_BASE_URL=http://localhost:{{PORT}}/api/v1    #{{PORT}} GET PORT Form production-api 
+
+
+
+
+[25/01/2026]
+    
+
+
+    
