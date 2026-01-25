@@ -170,13 +170,13 @@ export const addStock = async (req, res) => {
 };
 
 
-// Delete Product (Admin)
+/* Delete Product (Admin) */
 export const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if(!product) return res.status(404).json({message: "Product not found"});
 
-    // Delete all image form cloudinary
+    /* Delete all image form cloudinary */
     for(const url of product.images){
       const parts = url.split('/');
       const filename = parts[parts.length -1 ];
@@ -184,7 +184,7 @@ export const deleteProduct = async (req, res) => {
       await cloudinary.uploader.destroy(publicId);
     }
 
-    // await product.remove();
+    /* await product.remove(); */
     await Product.deleteOne({ _id: req.params.id });
     res.json({message: "Product deleted!"});
   } catch (error) {

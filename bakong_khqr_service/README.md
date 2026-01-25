@@ -47,7 +47,13 @@ python -m venv
 source venv/bin/activate
 ```
 
-4. Run Python bakong-khqr
+4. Install Dependencies
+
+```bash
+pip install fastapi uvicorn requests python-dotenv pydantic
+```
+
+5. Run Python bakong-khqr
 
 ```bash
 uvicorn main:app --host 0.0.0.0 --port 5001

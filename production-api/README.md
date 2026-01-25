@@ -65,10 +65,11 @@ production-api/
 ```
 
 ## How to Run Project
-1. Install Dependencies
+1. Install Dependencies AND Initialize Node.js
 
 ```bash
-npm install
+npm init -y
+npm install express mongoose dotenv cors axios jsonwebtoken bcryptjs multer cloudinary express-rate-limit
 ```
 
 2. Setup Enviroment Variables
