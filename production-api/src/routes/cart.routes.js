@@ -10,7 +10,7 @@ import {
 
 const router = express.Router();
 
-// All cart routes are protected and for USER role only
+/* All cart routes are protected and for USER role only */
 router.use(protect, isUser); 
 
 router.get("/", getCart);

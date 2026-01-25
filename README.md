@@ -43,6 +43,97 @@ This backend API is design tp support a modern e-commerce application (Web/Mobil
 ### Testing project API
 ![Postman](https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=Postman&logoColor=white)
 
+## Structur Project
+
+```bash
+ecommerce-api/
+│
+├── README.md
+├── LICENSE
+│
+├── production-api/                     # Node.js Backend
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── server.js
+│   ├── adminSeed.js
+│   ├── qr.html
+│   ├── helper.doc
+│   ├── .env
+│
+│   └── src/
+│       ├── app.js
+│
+│       ├── config/
+│       │   ├── bakong.js              # Python service URL
+│       │   ├── cloudinary.js
+│       │   ├── db.js
+│       │   └── jwt.js
+│
+│       ├── controllers/
+│       │   ├── auth.controller.js
+│       │   ├── cart.controller.js
+│       │   ├── category.controller.js
+│       │   ├── order.controller.js
+│       │   ├── payment.controller.js  # Calls Python
+│       │   └── product.controller.js
+│
+│       ├── jobs/
+│       │   └── bakong.poller.js        # Check payment status
+│
+│       ├── middlewares/
+│       │   ├── admin.middleware.js
+│       │   ├── adminSeed.js
+│       │   ├── auth.middleware.js
+│       │   ├── authLimiter.js
+│       │   ├── upload.js
+│       │   ├── user.middleware.js
+│       │   └── validate.js
+│
+│       ├── models/
+│       │   ├── Cart.js
+│       │   ├── Category.js
+│       │   ├── Order.js
+│       │   ├── Payment.js
+│       │   ├── Product.js
+│       │   └── User.js
+│
+│       ├── routes/
+│       │   ├── auth.routes.js
+│       │   ├── cart.routes.js
+│       │   ├── category.routes.js
+│       │   ├── order.routes.js
+│       │   ├── payment.routes.js
+│       │   └── product.routes.js
+│
+│       ├── services/
+│       │   └── bakong.service.js       # axios → Python
+│
+│       ├── utils/
+│       │   ├── khqr.js                 # (optional legacy)
+│       │   ├── md5.js
+│       │   └── paginate.js
+│
+│       └── validators/
+│           └── auth.validator.js
+│
+├── bakong-python-service/              # Python Bakong Service
+│   ├── README.md
+│   ├── requirements.txt
+│   ├── .env
+│
+│   ├── main.py                         # FastAPI entry
+│   ├── bakong.py                       # KHQR logic
+│
+│   ├── routes/
+│   │   ├── qr_routes.py                # /create-qr
+│   │   └── payment_routes.py           # /check-payment
+│
+│   ├── services/
+│   │   └── bakong_service.py
+│
+│   
+
+```
 
 
 ## Authentication Flow
@@ -97,20 +188,23 @@ Role-based access is endforced via middleware.
 2. Backend validation stock
 3. Order is created
 4. Stock is reduced (After payment success)
-5. Order status = ``` pending ```
+5. Order status = ``` PENDING, PAID, FAILED, CANCEL ```
 
 ## Payment Flow (Bakong Khqr)
 
 ### Payment Process
-1. Create payment intent
-2. User completes payment (generate khqr)
-3. Payment confirmation
-4. Order status updated
+1. Create payment integration with bakong-khqr
+2. User completes payment (khqr-string)
+3. Order status updated
 
 ### Payment Status
-- pending
-- paid
-- failed
+- PENDING
+- PAID
+- FAILED
+- CANCEL
+
+This link website generate qrcode ``` https://qr.gov.kh/en/ ```
+
 
 ## E-Commerce Lifecycle
 
