@@ -36,8 +36,12 @@ const orderSchema = new mongoose.Schema(
 
     finalAmount: { type: Number, required: true },
 
-    deliveryAddress: { type: String, required: true },
-    phoneNumber: { type: String, required: true },
+    deliveryAddress: { 
+      type: String,
+      required: false },
+    phoneNumber: { 
+      type: String, 
+      required: false },
 
     paymentMethod: {
       type: String,
@@ -66,6 +70,12 @@ const orderSchema = new mongoose.Schema(
     },
 
     isPaid: { type: Boolean, default: false },
+
+    /* TelegramNofi */
+    telegramNotify:{
+      type: Boolean,
+      default: false
+    }
   },
   { timestamps: true }
 );
