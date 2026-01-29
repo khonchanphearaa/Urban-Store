@@ -1,6 +1,7 @@
 import os
 import time
 import requests
+import hashlib
 from io import BytesIO
 from pathlib import Path
 import base64
@@ -21,6 +22,7 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 NODE_API = os.getenv("NODE_API_BASE_URL")
 QR_EXPIRE_SECONDS = 300
+BAKONG_TOKEN = os.getenv("BAKONG_TOKEN")
 
 
 def fetch_payment_info(order_id: str):
@@ -31,38 +33,75 @@ def fetch_payment_info(order_id: str):
     return r.json()
 
 
-# @router.get("/ui/{order_id}", response_class=HTMLResponse)
-# def show_qr_ui(request: Request, order_id: str):
-
-#     # ✅ GET REAL AMOUNT FROM NODE
-#     payment_info = fetch_payment_info(order_id)
-#     amount = payment_info["amount"]
-
-#     # Generate KHQR
-#     qr_string = generate_khqr(amount, order_id)
-
-#     qr_img = qrcode.make(qr_string)
-#     buffer = BytesIO()
-#     qr_img.save(buffer, format="PNG")
-#     qr_base64 = base64.b64encode(buffer.getvalue()).decode()
-
-#     expires_at = int(time.time()) + QR_EXPIRE_SECONDS
-
-#     return templates.TemplateResponse(
-#         "qr.html",
-#         {
-#             "request": request,
-#             "order_id": order_id,
-#             "amount": amount,              # ✅ REAL AMOUNT
-#             "qr_base64": qr_base64,
-#             "expires_at": expires_at
-#         }
-#     )
 class QRRequest(BaseModel):
     order_id: str
     amount: int
+
+@router.get("/debug/token-check")
+def debug_token():
+    """Debug endpoint to check if token is valid"""
+    return {
+        "token_exists": bool(BAKONG_TOKEN),
+        "token_length": len(BAKONG_TOKEN) if BAKONG_TOKEN else 0,
+        "token_preview": f"{BAKONG_TOKEN[:20]}...{BAKONG_TOKEN[-10:]}" if BAKONG_TOKEN else "NO TOKEN",
+        "is_jwt": BAKONG_TOKEN.startswith("eyJ") if BAKONG_TOKEN else False,
+        "message": "If is_jwt=True, this is a JWT token, not a Bakong API token!"
+    }
+
 
 @router.post("/create-qr")
 def create_qr(payload: QRRequest):
     qr_string = generate_khqr(payload.amount, payload.order_id)
     return { "qr_string": qr_string }
+
+
+@router.post("/check-payment")
+def check_payment_bakong(payload: dict):
+    """Check payment status with Bakong API"""
+    try:
+        qr_string = payload.get("qr_string")
+        
+        if not qr_string:
+            return {"success": False, "message": "QR string required"}
+        
+        # Generate MD5 hash of QR string
+        bakong_md5 = hashlib.md5(qr_string.encode()).hexdigest()
+        
+        print(f" Checking payment with Bakong: md5={bakong_md5}")
+        print(f" Using token: {BAKONG_TOKEN[:20]}...{BAKONG_TOKEN[-10:]}")
+        
+        # Call Bakong API
+        response = requests.post(
+            "https://sit-api-bakong.nbc.gov.kh/v1/check_transaction_by_md5",
+            json={"md5": bakong_md5},
+            headers={
+                "Authorization": f"Bearer {BAKONG_TOKEN}",
+                "Content-Type": "application/json"
+            },
+            timeout=10
+        )
+        
+        print(f" Bakong Response Status: {response.status_code}")
+        print(f" Bakong Response Body: {response.text}")
+        
+        response_data = response.json()
+        print(f" Parsed Response: {response_data}")
+        
+        # If unauthorized, log more details
+        if response.status_code == 401:
+            print(" UNAUTHORIZED - Token might be invalid or expired")
+            print(f"Response Message: {response_data.get('responseMessage')}")
+        
+        return response_data
+        
+    except Exception as e:
+        print(f"Payment check error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "success": False,
+            "message": str(e),
+            "responseCode": -1,
+            "error_type": type(e).__name__
+        }
+
