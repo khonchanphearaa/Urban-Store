@@ -6,8 +6,13 @@ from routes.qr_routes import router
 
 app = FastAPI(title="Bakong KHQR Service")
 
-app.include_router(router)
+# Include router with prefix
+app.include_router(router, prefix="", tags=["payments"])
 
 @app.get("/")
 def health():
     return {"status": "Bakong service running"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "service": "Bakong KHQR Service"}
