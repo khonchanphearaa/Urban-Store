@@ -24,6 +24,10 @@ This service follows a Controller-Service-Modal pattern.
 
     mkdir -p src/{config,controllers,jobs,middlewares,models,routes,services,utils,validators} touch server.js src/app.js .env
 
+    3. Running Node.js
+    
+    npm run dev OR npm start
+
     3. Key Highlights for this SETUP
         - src/service/bakong.service.js : This is where you will use (axios) to call the Python service.
         - src/jobs/bakong.poller.js : Use (node-cron )or a simple (setInterval) here to check payments status periodically.
@@ -48,14 +52,22 @@ This service handles the specific Bakong-khqr generation logic, likely utilizing
 
     2. Install Dependencies
 
-    pip install fastapi uvicorn requests python-dotenv pydantic
+    pip install fastapi uvicorn qrcode pillow python-dotenv jinja2
 
-    3. Create Folder Structure
+    3. Vertify Dependencies in file requirements.txt
+
+    pip install -r requirements.txt
+
+    4. Create Folder Structure
 
     mkdir routes services
     touch main.py bakong.py .env requirements.txt
 
-    4. Key Highlights for this setup
+    5. Running Python Service
+
+    uvicorn main:app --reload --port 5001       #PROT you can provide optional
+
+    6. Key Highlights for this setup
         - main.py: The entry point for (FASTAPI)
         - bakong.py: This logic and package libraries bakong-khqr SDKm KHQR string and CRC16 validations.
     
