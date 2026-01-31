@@ -203,6 +203,16 @@ Role-based access is endforced via middleware.
 - FAILED
 - CANCEL
 
+## REST API 
+This the base urls
+```bash
+https://urban-store-6gj1.onrender.com
+```
+
+**Note waiting maybe 1-2 minutes it service walking up ....
+
+For Endpoint Read More in README.md ``` production-api ```
+
 This link website generate qrcode ``` https://qr.gov.kh/en/ ```
 
 
