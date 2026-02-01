@@ -4,14 +4,11 @@ import requests
 import hashlib
 from io import BytesIO
 from pathlib import Path
-import base64
-import qrcode
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from starlette.templating import Jinja2Templates
 from dotenv import load_dotenv
 from pydantic import BaseModel
-
 from bakong import generate_khqr
 
 load_dotenv()
@@ -23,6 +20,8 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 NODE_API = os.getenv("NODE_API_BASE_URL")
 QR_EXPIRE_SECONDS = 300
 BAKONG_TOKEN = os.getenv("BAKONG_TOKEN")
+BAKONG_API_BASE = os.getenv("BAKONG_API_BASE_URL", "https://api-bakong.nbc.gov.kh")
+BAKONG_CHECK_PATH = "/v1/check_transaction_by_md5"
 
 
 def fetch_payment_info(order_id: str):
@@ -60,19 +59,20 @@ def check_payment_bakong(payload: dict):
     """Check payment status with Bakong API"""
     try:
         qr_string = payload.get("qr_string")
+        provided_md5 = payload.get("md5_hash")
         
         if not qr_string:
             return {"success": False, "message": "QR string required"}
         
-        # Generate MD5 hash of QR string
-        bakong_md5 = hashlib.md5(qr_string.encode()).hexdigest()
+        # Generate MD5 hash of QR string (or use provided hash)
+        bakong_md5 = provided_md5 or hashlib.md5(qr_string.encode()).hexdigest()
         
         print(f" Checking payment with Bakong: md5={bakong_md5}")
         print(f" Using token: {BAKONG_TOKEN[:20]}...{BAKONG_TOKEN[-10:]}")
         
-        # Call Bakong API
+        ## Call Bakong API to check payment status
         response = requests.post(
-            "https://sit-api-bakong.nbc.gov.kh/v1/check_transaction_by_md5",
+            f"{BAKONG_API_BASE}{BAKONG_CHECK_PATH}",
             json={"md5": bakong_md5},
             headers={
                 "Authorization": f"Bearer {BAKONG_TOKEN}",
