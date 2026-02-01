@@ -1,0 +1,54 @@
+TELEGRAM-NOIIFY 
+
+Release: Telegram v1
+
+
+    - WE needs to get by:
+        +Telegram_Bot_Token
+        +Telegram_Chat_ID
+
+    ++ STEP How To Get Telegram Bot and Telegram Chat ID
+
+    --> Get: Telegram Bot_Token from @BotFather
+        * Start the bot:
+            /start
+            1. Create name the bot telegram (e.g., SuperBot)
+            2. Take username your telegram bot, Make sure it must be end in `bot` (e.g., Superunixbot or Superunix_bot)
+            3. It show will find at t.me/Superunixbot is username your telegram bot
+            4. Is importan get token to access the HTTP API provide: (e.g., 845433:AFEFde@###) 
+            
+            **Note Your token secure and store it safely, it can be used by anyone to control your bot.
+        IF problem you can contact @BotFather https://core.telegram.org/bots/api
+
+    --> Get: Telegram Chat_ID from @userinfobot 
+        /start
+    e.g., 
+        @username your telegram
+        id: 834@###
+        First: firstname
+        Last: lastname
+        Lang: en --> default english
+        Registered: Check Date
+
+        **Note you can use other optional cuz it have many tools control Menu:
+        Such as: User, Bot, Group, Channel,...
+
+**Read here workflow:
+
+    - By default status payment (PEADING)
+
+    - When user payment confrimed (Bakong responseCode 0),
+    The API updates Order/Payment to (PAID) and sends a Telegram message.
+
+    - When an orders expires (older than 5 minutes) and no Payments is not found,
+    It marks (CANCLLED) and sends a telegram message
+    
+    - The background poller also sends duplicate alerts. 
+    On fun (retryPayment), It's reset so a new notification can be sent for the attempt.
+
+    
+
+
+
+
+    
