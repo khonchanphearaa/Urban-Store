@@ -9,30 +9,27 @@ import { sendPaymentStatusTelegram, sendAdminAlert } from "../services/telegram.
 export const createPayment = async (req, res) => {
   try {
     const { orderId } = req.body;
-
     const order = await Order.findById(orderId);
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
-
-    // Allow retry if status is PENDING or CANCELLED
     if (order.status === "PAID") {
       return res.status(400).json({ message: "Order already paid" });
     }
 
     const amount = order.finalAmount;
 
-    // 1. Generate Security Hash
+    /* Generate Security Hash */
     const hash = generatePaymentHash({
       orderId: order._id.toString(),
       amount,
       currency: "KHR",
     });
 
-    // 2. Create Bakong QR from Service
+    /* Create Bakong QR from Service */
     const qr = await createBakongQR(order._id.toString(), amount);
 
-    // 3. Update Order Object
+    /* Update Order Object */
     order.status = "PENDING";
     order.payment = {
       method: "BAKONG_KHQR",
@@ -43,11 +40,11 @@ export const createPayment = async (req, res) => {
       hash,
     };
 
-    // Important for Mongoose to track object updates
+    /* Important for Mongoose to track object updates */
     order.markModified('payment'); 
     await order.save();
 
-    // 4. Create separate Payment Record for history
+    /* Create separate Payment Record for history */
     const payment = await Payment.create({
       orderId: order._id,
       amount,
@@ -55,7 +52,6 @@ export const createPayment = async (req, res) => {
       status: "PENDING",
       hash,
     });
-
     res.json({
       success: true,
       orderId: order._id,
@@ -74,11 +70,6 @@ export const createPayment = async (req, res) => {
 //#region Check Payment Status md5 status
 export const checkPaymentStatus = async (req, res) => {
   try {
-    console.log("--- TOKEN VERIFICATION ---");
-    console.log("Token exists in .env:", !!process.env.BAKONG_TOKEN);
-    console.log("Token value:", process.env.BAKONG_TOKEN);
-    console.log("Token starts with:", process.env.BAKONG_TOKEN?.substring(0, 15) + "...");
-    console.log("Token length:", process.env.BAKONG_TOKEN?.length || 0);
     const { orderId } = req.body;
     const order = await Order.findById(orderId);
 
@@ -161,7 +152,7 @@ export const checkPaymentStatus = async (req, res) => {
       return res.json({ success: true, status: "PAID" });
     }
 
-    /* 4. Logic for AUTO-CANCEL (15 Minutes) */
+    /*Logic for AUTO-CANCEL 5 minute */
     const minutesSinceCreated = (Date.now() - new Date(order.createdAt).getTime()) / 60000;
     
     console.log(`Time elapsed: ${minutesSinceCreated.toFixed(2)} minutes (limit: 15 minutes)`);
