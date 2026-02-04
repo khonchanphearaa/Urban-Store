@@ -1,0 +1,37 @@
+    
+   IAM (Identity and Access Management)
+++IAM: The The industry-standard name for the group managing user identities, 
+  authentication (logging in), and authorization (permissions).
+
+
+    HOW to get: credentials
+    
+    *Note you can't just use regular Gemail Password. Google blocks (less secure app)
+    for security you must generate a spacific (App Password).
+
+    STEP 1: Setup 2-Step Verification
+    Google requires 2-Step Verification to be active before you can create an App Password.
+        
+        1. Go to your https://myaccount.google.com
+        2. On left select Security
+        3. Under "How you sign in to Google," click on 2-Step Verification.
+        4. Follow the prompts to turn it on
+
+
+    STEP 2: Generate the App Password
+    Once 2-Step Verification is active, you can create the specific code for your Node.js app.
+
+        1. Search (App Password) 
+        2. Give it a name so you remember what it's for (e.g., "ThebanAuthApp").
+        3. A window will pop up with a 16-character code (e.g., abcd efgh ijkl mnop)
+    
+
+    STEP 3: In .env
+    Copy that 16-character code and paste it into your project. Do not include spaces.
+   
+        EMAIL_USER=yourname@gmail.com
+        EMAIL_PASS=abcdefghijklmnop
+
+**Important Note: Treat this EMAIL_PASS exactly like your main password. If you ever push your code to GitHub, make sure your .env file is listed in .gitignore so your password doesn't become public.
+
+    
