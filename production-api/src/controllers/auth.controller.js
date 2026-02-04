@@ -2,6 +2,8 @@ import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { generateAccessToken, generateRefreshToken } from "../config/jwt.js";
+import { sendEmail } from "../utils/sendEmail.js";
+import { generateOTP } from "../utils/generateOTP.js";
 
 /* Register (USER Only) */
 export const register = async (req, res) => {
@@ -91,7 +93,7 @@ export const login = async (req, res) => {
 };
 
 // Refresh Token
-export const refreshToken = async (req, res) =>{
+export const refreshToken = async (req, res) => {
   const token = req.cookies.refreshToken;
   if (!token) return res.sendStatus(401);
 
@@ -125,3 +127,83 @@ export const logout = async (req, res) => {
   res.clearCookie("refreshToken");
   res.json({ message: "Logout success (client removes token)" });
 };
+
+//#region Forgot password 
+export const sendOTPtoEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(400).json({ message: 'Email not found!' });
+    }
+
+    const otp = await generateOTP();
+    
+    /* Save OTP and Expire time to user document */
+    user.otp = otp;
+    user.otpExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
+    await user.save();
+
+    await sendEmail(
+      {
+        email: user.email,
+        subject: "Your OTP Code",
+        otp
+      });
+    res.status(200).json({ message: 'OTP sent to your email, Please check inbox' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error sending OTP.' });
+  }
+}
+//#endregion
+
+//#region Vertify OTP
+export const verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const user = await User.findOne(
+      {
+        email: email.toLowerCase(),
+        otp: otp,
+        otpExpires: { $gt: Date.now() }
+      }
+    );
+    if (!user) { return res.status(400).json({ message: 'Invalid or expired OTP!' }); }
+    res.status(200).json({ message: 'OTP verified success.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error vertifying OTP' });
+  }
+}
+//#endregion
+
+//#region  Reset Password
+export const resetpwd = async (req, res) =>{
+  try {
+    const { email, otp, newPassword, confirmPassword } = req.body;
+    if(newPassword !== confirmPassword){return res.status(400).json({message: 'Password do not match!'});}
+    /* Verity OTP and Expire */
+    const user = await User.findOne(
+      {
+        email: email.toLowerCase(),
+        otp: otp,
+        otpExpires: { $gt: Date.now() }
+      }
+    )
+    if(!user){return res.status(400).json({message: 'Invalid OTP or session expired'});}
+    
+    /* Hash new password */
+    const hashedPwd = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, hashedPwd);
+
+    /* This call One-Time, The password is change that OTP must become unless.
+       If you don't clear OTP, it can be reused the same 4-digit code again 
+       within that 5 minutes window changes the password second times. */
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+    res.status(200).json({sucess: true, message: 'Password reset success'});
+  } catch (error) {
+    res.status(500).json({message: 'Error setting new password' });
+  }
+}
+//#endregion
