@@ -1,5 +1,5 @@
 import express from "express";
-import { register, login, logout, refreshToken } from "../controllers/auth.controller.js";
+import { register, login, logout, refreshToken, sendOTPtoEmail, verifyOTP, resetpwd } from "../controllers/auth.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 import { registerValidator } from "../validators/auth.validator.js";
 import { validate } from "../middlewares/validate.js";
@@ -11,6 +11,9 @@ router.post("/register", registerLimiter, registerValidator, validate, register)
 router.post("/login", loginLimiter, login);
 router.post("/refresh-token", refreshToken);
 router.post("/logout", protect, logout);
+router.post("/forgot-password", protect, sendOTPtoEmail);
+router.post("/verity-otp", protect, verifyOTP);
+router.post("/reset-password", protect, resetpwd);
 
 export default router;
     
