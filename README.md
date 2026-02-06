@@ -49,6 +49,7 @@ This backend API is design tp support a modern e-commerce application (Web/Mobil
 ecommerce-api/
 │
 ├── README.md
+├── Dockerfile
 ├── LICENSE
 │
 ├── production-api/                     # Node.js Backend
@@ -56,7 +57,6 @@ ecommerce-api/
 │   ├── package-lock.json
 │   ├── server.js
 │   ├── adminSeed.js
-│   ├── qr.html
 │   ├── helper.doc
 │   ├── .env
 │
