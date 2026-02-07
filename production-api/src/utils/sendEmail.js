@@ -11,6 +11,16 @@ export const sendEmail = async (options) => {
             ? process.env.EMAIL_SECURE === "true"
             : port === 465;
 
+    const connectionTimeout = process.env.EMAIL_CONN_TIMEOUT
+        ? parseInt(process.env.EMAIL_CONN_TIMEOUT, 10)
+        : 10000;
+    const greetingTimeout = process.env.EMAIL_GREETING_TIMEOUT
+        ? parseInt(process.env.EMAIL_GREETING_TIMEOUT, 10)
+        : 10000;
+    const tlsReject = typeof process.env.EMAIL_TLS_REJECT !== "undefined"
+        ? process.env.EMAIL_TLS_REJECT === "true"
+        : true;
+
     const transporter = nodemailer.createTransport({
         host,
         port,
@@ -19,6 +29,9 @@ export const sendEmail = async (options) => {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
         },
+        connectionTimeout,
+        greetingTimeout,
+        tls: { rejectUnauthorized: tlsReject },
     });
 
     const mailOptions = {
@@ -47,3 +60,7 @@ export const sendEmail = async (options) => {
         throw err;
     }
 };
+
+// Note: In production ensure EMAIL_USER and EMAIL_PASS are correct
+// Optionally set these env vars to tune timeouts and TLS behavior:
+// EMAIL_CONN_TIMEOUT (ms), EMAIL_GREETING_TIMEOUT (ms), EMAIL_TLS_REJECT=false
