@@ -12,17 +12,17 @@ COPY production-api/package*.json ./production-api/
 RUN cd production-api && npm install --production
 
 # ---------- PYTHON ----------
-COPY bakong-khqr-service/requirements.txt ./bakong-khqr-service/
+COPY bakong_khqr_service/requirements.txt ./bakong_khqr_service/
 RUN pip3 install --no-cache-dir --break-system-packages \
-    -r bakong-khqr-service/requirements.txt
+  -r bakong_khqr_service/requirements.txt
 
 # ---------- SOURCE ----------
 COPY production-api ./production-api
-COPY bakong-khqr-service ./bakong-khqr-service
+COPY bakong_khqr_service ./bakong_khqr_service
 
 EXPOSE 3000
 
 CMD sh -c "\
-  uvicorn bakong-khqr-service.main:app --host 0.0.0.0 --port 8000 & \
+  uvicorn bakong_khqr_service.main:app --host 0.0.0.0 --port 8000 & \
   node production-api/server.js \
 "
