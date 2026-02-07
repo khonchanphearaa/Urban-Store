@@ -11,9 +11,9 @@ router.post("/register", registerLimiter, registerValidator, validate, register)
 router.post("/login", loginLimiter, login);
 router.post("/refresh-token", refreshToken);
 router.post("/logout", protect, logout);
-router.post("/forgot-password", protect, sendOTPtoEmail);
-router.post("/verity-otp", protect, verifyOTP);
-router.post("/reset-password", protect, resetpwd);
+router.post("/forgot-password", sendOTPtoEmail);
+router.post("/verity-otp", verifyOTP);
+router.post("/reset-password", resetpwd);
 
 export default router;
     
