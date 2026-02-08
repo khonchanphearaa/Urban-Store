@@ -19,22 +19,24 @@ export const createBakongQR = async (orderId, amount) => {
       }
     );
 
-    // Normalize response for compatibility with different Python service shapes
     const data = res.data;
     console.log("Bakong service raw response:", data);
 
-    // If the Python service wrapped the qr data as an object (legacy shape), extract it
-    if (data && data.qr_string && typeof data.qr_string === "object") {
-      const normalized = {
-        qr_string: data.qr_string.qr_string,
-        md5: data.qr_string.md5,
-        ...data,
-      };
-      console.log("Bakong service normalized response:", normalized);
-      return normalized;
+    // Validate response has required fields
+    if (!data.qr_string) {
+      throw new Error("Invalid response: missing qr_string");
+    }
+    
+    if (!data.md5) {
+      throw new Error("Invalid response: missing md5 hash");
     }
 
-    return data;
+    // Return normalized response
+    return {
+      qr_string: data.qr_string,
+      md5: data.md5
+    };
+
   } catch (err) {
     console.error("Bakong service create-qr error:", err?.response?.status, err?.response?.data || err.message);
     if (err.response) {
