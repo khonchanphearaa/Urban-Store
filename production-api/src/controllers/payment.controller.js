@@ -77,6 +77,24 @@ export const checkPaymentStatus = async (req, res) => {
     if (!order) {
       return res.status(404).json({ message: 'Order not found!' });
     }
+    /* Quick DB check: if a Payment record already shows PAID, reconcile immediately */
+    try {
+      const paymentRecord = await Payment.findOne({ orderId: order._id });
+      if (paymentRecord && (paymentRecord.status === "PAID" || paymentRecord.txHash)) {
+        order.isPaid = true;
+        order.status = "PAID";
+        order.payment = {
+          ...order.payment,
+          status: "PAID",
+          txHash: paymentRecord.txHash || order.payment?.txHash || paymentRecord.hash || "confirmed"
+        };
+        order.telegramNotify = true;
+        await order.save();
+        return res.json({ success: true, status: "PAID" });
+      }
+    } catch (dbCheckErr) {
+      console.error("Pre-check Payment DB error:", dbCheckErr.message);
+    }
     if (order.isPaid || order.status === "PAID") {
       return res.json({ success: true, status: "PAID" });
     }
@@ -144,6 +162,33 @@ export const checkPaymentStatus = async (req, res) => {
       /* Telegram Notify */
       if (!order.telegramNotify) {
         console.log("Sending Telegram notification...");
+        await sendPaymentStatusTelegram(order, "PAID");
+        order.telegramNotify = true;
+        await order.save();
+      }
+
+      return res.json({ success: true, status: "PAID" });
+    }
+
+    /* Handle cases where Bakong returns a transaction object even if responseCode isn't 0 */
+    const possibleTx = response.data?.data?.hash || response.data?.data?.id;
+    if (possibleTx) {
+      console.log("Bakong returned tx info despite non-zero code, marking PAID", possibleTx);
+      order.isPaid = true;
+      order.status = "PAID";
+      order.payment.status = "PAID";
+      order.payment.txHash = possibleTx;
+      await order.save();
+      await Payment.findOneAndUpdate(
+        { orderId: order._id },
+        {
+          status: "PAID",
+          txHash: possibleTx,
+        },
+        { new: true }
+      );
+
+      if (!order.telegramNotify) {
         await sendPaymentStatusTelegram(order, "PAID");
         order.telegramNotify = true;
         await order.save();
