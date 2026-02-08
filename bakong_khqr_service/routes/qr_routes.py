@@ -80,19 +80,45 @@ def check_payment_bakong(payload: dict):
             },
             timeout=10
         )
-        
+
         print(f" Bakong Response Status: {response.status_code}")
         print(f" Bakong Response Body: {response.text}")
-        
-        response_data = response.json()
+
+        # Try to parse JSON safely
+        try:
+            response_data = response.json()
+        except Exception:
+            response_data = {"raw": response.text}
+
         print(f" Parsed Response: {response_data}")
-        
+
+        # Normalize response shape for Node consumer
+        normalized = {
+            "responseCode": None,
+            "responseMessage": None,
+            "data": None
+        }
+
+        if isinstance(response_data, dict):
+            # common field names
+            normalized["responseCode"] = response_data.get("responseCode") if response_data.get("responseCode") is not None else response_data.get("code")
+            normalized["responseMessage"] = response_data.get("responseMessage") or response_data.get("message") or response_data.get("response_msg")
+            normalized["data"] = response_data.get("data") or response_data.get("result") or response_data
+        else:
+            normalized["responseCode"] = -1
+            normalized["responseMessage"] = "Invalid response from Bakong"
+            normalized["data"] = {"raw": response.text}
+
         # If unauthorized, log more details
         if response.status_code == 401:
             print(" UNAUTHORIZED - Token might be invalid or expired")
-            print(f"Response Message: {response_data.get('responseMessage')}")
-        
-        return response_data
+            print(f"Response Message: {normalized.get('responseMessage')}")
+
+        # Ensure responseCode is numeric or default to -1
+        if normalized["responseCode"] is None:
+            normalized["responseCode"] = -1
+
+        return normalized
         
     except Exception as e:
         print(f"Payment check error: {str(e)}")
@@ -100,7 +126,7 @@ def check_payment_bakong(payload: dict):
         traceback.print_exc()
         return {
             "success": False,
-            "message": str(e),
+            "responseMessage": str(e),
             "responseCode": -1,
             "error_type": type(e).__name__
         }
