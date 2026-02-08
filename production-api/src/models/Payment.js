@@ -11,6 +11,7 @@ const paymentSchema = new mongoose.Schema(
     method: String,
     status: String,
     hash: String,
+    md5: String, 
     txHash: String,
   },
   { timestamps: true }

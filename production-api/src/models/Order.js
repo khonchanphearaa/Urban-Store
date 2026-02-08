@@ -59,16 +59,18 @@ const orderSchema = new mongoose.Schema(
       currency: { type: String, default: "KHR" },
       amount: Number,
       qrString: String,
+      md5: String, 
       hash: String,
       txHash: String,
     },
 
-    status: {
-      type: String,
-      enum: ["PENDING", "PAID", "CANCELLED"],
-      default: "PENDING",
-    },
+    // status: {
+    //   type: String,
+    //   enum: ["PENDING", "PAID", "CANCELLED"],
+    //   default: "PENDING",
+    // },
 
+    status: { type: String, default: "PENDING" },
     isPaid: { type: Boolean, default: false },
 
     /* TelegramNofi */

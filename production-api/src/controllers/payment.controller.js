@@ -2,10 +2,10 @@ import axios from "axios";
 import Order from "../models/Order.js";
 import Payment from "../models/Payment.js";
 import { createBakongQR } from "../services/bakong.service.js";
-import { generatePaymentHash, generateBakongStatusHash } from "../utils/md5.js";
+import { generatePaymentHash } from "../utils/md5.js";
 import { sendPaymentStatusTelegram, sendAdminAlert } from "../services/telegram.service.js";
 
-//#region Create Payment Generat KHQR
+//#region Create Payment Generate KHQR
 export const createPayment = async (req, res) => {
   try {
     const { orderId } = req.body;
@@ -26,17 +26,20 @@ export const createPayment = async (req, res) => {
       currency: "KHR",
     });
 
-    /* Create Bakong QR from Service */
-    const qr = await createBakongQR(order._id.toString(), amount);
+    /* Create Bakong QR from Service - NOW RETURNS MD5 */
+    const qrData = await createBakongQR(order._id.toString(), amount);
+    
+    console.log("QR Data received:", qrData);
 
-    /* Update Order Object */
+    /* Update Order Object with MD5 */
     order.status = "PENDING";
     order.payment = {
       method: "BAKONG_KHQR",
       status: "PENDING",
       currency: "KHR",
       amount,
-      qrString: qr.qr_string,
+      qrString: qrData.qr_string,
+      md5: qrData.md5,  
       hash,
     };
 
@@ -51,12 +54,15 @@ export const createPayment = async (req, res) => {
       method: "BAKONG_KHQR",
       status: "PENDING",
       hash,
+      md5: qrData.md5,  
     });
+
     res.json({
       success: true,
       orderId: order._id,
       paymentId: payment._id,
-      qr_string: qr.qr_string,
+      qr_string: qrData.qr_string,
+      md5: qrData.md5,  
       amount,
     });
   } catch (error) {
@@ -67,7 +73,7 @@ export const createPayment = async (req, res) => {
 //#endregion
 
 
-//#region Check Payment Status md5 status
+//#region Check Payment Status using MD5
 export const checkPaymentStatus = async (req, res) => {
   try {
     const { orderId } = req.body;
@@ -77,6 +83,7 @@ export const checkPaymentStatus = async (req, res) => {
     if (!order) {
       return res.status(404).json({ message: 'Order not found!' });
     }
+
     /* Quick DB check: if a Payment record already shows PAID, reconcile immediately */
     try {
       const paymentRecord = await Payment.findOne({ orderId: order._id });
@@ -95,6 +102,7 @@ export const checkPaymentStatus = async (req, res) => {
     } catch (dbCheckErr) {
       console.error("Pre-check Payment DB error:", dbCheckErr.message);
     }
+
     if (order.isPaid || order.status === "PAID") {
       return res.json({ success: true, status: "PAID" });
     }
@@ -105,12 +113,19 @@ export const checkPaymentStatus = async (req, res) => {
       return res.status(400).json({ message: "QR String not found in database" });
     }
 
-    /* generate md5 status bakong */
-    const bakongMd5 = generateBakongStatusHash(order.payment.qrString);
+    /* Get MD5 from stored payment data */
+    const bakongMd5 = order.payment.md5;
+    
+    if (!bakongMd5) {
+      return res.status(400).json({ 
+        message: "MD5 hash not found. Please regenerate payment QR code." 
+      });
+    }
+
     console.log("Checking payment status:", {
       orderId: order._id,
       qr_string: order.payment.qrString,
-      bakongMd5: bakongMd5
+      md5: bakongMd5
     });
 
     /* CALL: Python Bakong_khqr_Service to check bakong API */
@@ -121,16 +136,20 @@ export const checkPaymentStatus = async (req, res) => {
         qr_string: order.payment.qrString,
         md5_hash: bakongMd5
       },
-      {timeout: 60000}  /* 60 seconds = 1 minutes timeout for slow API response */
+      {timeout: 60000}  /* 60 seconds = 1 minute timeout for slow API response */
     );
-    /* Log bakong response error */
+
+    /* Log bakong response */
     console.log("Bakong Response:", {
       responseCode: response.data.responseCode,
       responseMessage: response.data.responseMessage,
       data: response.data.data
     });
+
     const respCode = response.data.responseCode;
     const respMsg = response.data.responseMessage || "";
+
+    /* Handle Unauthorized error */
     if ((respCode === 1 || respCode === "1") && /unauthor/i.test(respMsg)) {
       console.error(`Bakong Unauthorized for order ${order._id}: ${respMsg}`);
       try {
@@ -142,19 +161,23 @@ export const checkPaymentStatus = async (req, res) => {
       return res.status(502).json({ success: false, message: "Bakong Unauthorized - admin notified" });
     }
 
-    /* Login success if (responseCode is 0 mean transaction found/confirmed) */
+    /* SUCCESS: responseCode is 0 means transaction found/confirmed */
     if (response.data.responseCode === 0 || response.data.responseCode === "0") {
       console.log("Payment verified! Updating status to PAID");
+      
+      const txHash = response.data.data?.hash || response.data.data?.id || bakongMd5;
+      
       order.isPaid = true;
       order.status = "PAID";
       order.payment.status = "PAID";
-      order.payment.txHash = response.data.data?.hash || response.data.data?.id || "confirmed";
+      order.payment.txHash = txHash;
       await order.save();
+
       await Payment.findOneAndUpdate(
         { orderId: order._id },
         { 
           status: "PAID",
-          txHash: response.data.data?.hash || "confirmed"
+          txHash: txHash
         },
         { new: true }
       );
@@ -167,7 +190,7 @@ export const checkPaymentStatus = async (req, res) => {
         await order.save();
       }
 
-      return res.json({ success: true, status: "PAID" });
+      return res.json({ success: true, status: "PAID", txHash });
     }
 
     /* Handle cases where Bakong returns a transaction object even if responseCode isn't 0 */
@@ -179,6 +202,7 @@ export const checkPaymentStatus = async (req, res) => {
       order.payment.status = "PAID";
       order.payment.txHash = possibleTx;
       await order.save();
+
       await Payment.findOneAndUpdate(
         { orderId: order._id },
         {
@@ -194,10 +218,10 @@ export const checkPaymentStatus = async (req, res) => {
         await order.save();
       }
 
-      return res.json({ success: true, status: "PAID" });
+      return res.json({ success: true, status: "PAID", txHash: possibleTx });
     }
 
-    /*Logic for AUTO-CANCEL 5 minute */
+    /* Logic for AUTO-CANCEL after 15 minutes */
     const minutesSinceCreated = (Date.now() - new Date(order.createdAt).getTime()) / 60000;
     
     console.log(`Time elapsed: ${minutesSinceCreated.toFixed(2)} minutes (limit: 15 minutes)`);
@@ -223,14 +247,15 @@ export const checkPaymentStatus = async (req, res) => {
       return res.json({ success: true, status: "CANCELLED" });
     }
 
-    /*Logic for PENDING */
-    console.log("Payment still pending - waiting for confirmation");
+    /* Logic for PENDING */
+    console.log("⏳ Payment still pending - waiting for confirmation");
     res.json({ success: true, status: "PENDING" });
 
   } catch (error) {
     const errorStatus = error.response?.status || 500;
     const errorMessage = error.response?.data?.responseMessage || error.message;
     const fullErrorData = error.response?.data;
+
     if ((error.response?.status === 401) || /unauthor/i.test(errorMessage)) {
       try {
         await sendAdminAlert(`Order: ${req.body?.orderId || 'unknown'}\nError: ${errorMessage}\nAction: Please verify BAKONG_TOKEN in the Python service.`);
@@ -248,14 +273,14 @@ export const checkPaymentStatus = async (req, res) => {
     });
 
     res.status(errorStatus).json({ 
-        success: false, 
-        message: "Check status failed", 
-        error: errorMessage,
-        debug: {
-          bakongStatus: errorStatus,
-          tokenMissing: !process.env.BAKONG_TOKEN,
-          tokenLength: process.env.BAKONG_TOKEN?.length || 0
-        }
+      success: false, 
+      message: "Check status failed", 
+      error: errorMessage,
+      debug: {
+        bakongStatus: errorStatus,
+        tokenMissing: !process.env.BAKONG_TOKEN,
+        tokenLength: process.env.BAKONG_TOKEN?.length || 0
+      }
     });
   }
 };
@@ -275,16 +300,16 @@ export const retryPayment = async (req, res) => {
         message: "Only cancelled orders can retry payment",
       });
     }
+
     const amount = order.finalAmount;
     const hash = generatePaymentHash({
       orderId: order._id.toString(),
       amount,
       currency: "KHR",
     });
-    const qr = await createBakongQR(
-      order._id.toString(),
-      amount
-    );
+
+    const qrData = await createBakongQR(order._id.toString(), amount);
+
     order.status = "PENDING";
     order.isPaid = false;
     order.telegramNotify = false;
@@ -293,17 +318,20 @@ export const retryPayment = async (req, res) => {
       status: "PENDING",
       currency: "KHR",
       amount,
-      qrString: qr.qr_string,
+      qrString: qrData.qr_string,
+      md5: qrData.md5, 
       hash,
     };
 
     await order.save();
+
     await Payment.create({
       orderId: order._id,
       amount,
       method: "BAKONG_KHQR",
       status: "PENDING",
       hash,
+      md5: qrData.md5, 
     });
 
     res.json({
@@ -311,7 +339,8 @@ export const retryPayment = async (req, res) => {
       message: "Payment retry started",
       orderId: order._id,
       amount,
-      qr_string: qr.qr_string,
+      qr_string: qrData.qr_string,
+      md5: qrData.md5, 
     });
 
   } catch (error) {
