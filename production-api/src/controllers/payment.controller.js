@@ -103,7 +103,7 @@ export const checkPaymentStatus = async (req, res) => {
         qr_string: order.payment.qrString,
         md5_hash: bakongMd5
       },
-      {timeout: 15000}
+      {timeout: 60000}  /* 60 seconds = 1 minutes timeout for slow API response */
     );
     /* Log bakong response error */
     console.log("Bakong Response:", {
