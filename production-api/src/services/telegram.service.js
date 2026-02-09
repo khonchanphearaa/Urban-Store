@@ -1,3 +1,5 @@
+import axios from "axios";
+
 export const sendPaymentStatusTelegram = async (order, status) => {
   try {
     let header, statusText;
@@ -38,5 +40,23 @@ ${items}
     });
   } catch (error) {
     console.error("Telegram Service Error:", error.message);
+  }
+};
+
+export const sendAdminAlert = async (message) => {
+  try {
+    const chatId = process.env.TG_ADMIN_CHAT_ID || process.env.TG_CHAT_ID;
+    if (!chatId || !process.env.TG_BOT_TOKEN) {
+      console.error("sendAdminAlert: Missing TG_CHAT_ID or TG_BOT_TOKEN");
+      return;
+    }
+
+    await axios.post(`https://api.telegram.org/bot${process.env.TG_BOT_TOKEN}/sendMessage`, {
+      chat_id: chatId,
+      text: message,
+      parse_mode: "HTML"
+    });
+  } catch (error) {
+    console.error("sendAdminAlert Error:", error?.message || error);
   }
 };
