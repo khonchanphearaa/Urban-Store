@@ -56,7 +56,8 @@ export const createPayment = async (req, res) => {
       hash,
       md5: qrData.md5,  
     });
-
+    
+    await sendPaymentStatusTelegram(order, "PENDING");
     res.json({
       success: true,
       orderId: order._id,
@@ -334,6 +335,7 @@ export const retryPayment = async (req, res) => {
       md5: qrData.md5, 
     });
 
+    await sendPaymentStatusTelegram(order, "PENDING");
     res.json({
       success: true,
       message: "Payment retry started",
