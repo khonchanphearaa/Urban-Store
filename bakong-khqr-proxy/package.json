@@ -1,0 +1,19 @@
+{
+  "name": "bakong-khqr-proxy",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy src/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "hono": "^4.11.9"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
