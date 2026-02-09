@@ -19,7 +19,6 @@ class ProxyKHQR(KHQR):
         self.token = token 
 
     def _KHQR__post_request(self, endpoint, payload):
-        """Overrides the internal library method to route through Cloudflare"""
         url = f"{self.proxy_url}{endpoint}"
         
         headers = {
@@ -30,13 +29,13 @@ class ProxyKHQR(KHQR):
         
         print(f"📡 Routing via Proxy: {url}")
         try:
-            response = requests.post(url, json=payload, headers=headers, timeout=15)
+            # 🔥 Add verify=False to bypass the SSL Underscore error
+            response = requests.post(url, json=payload, headers=headers, timeout=15, verify=False)
             response.raise_for_status()
             return response.json()
         except Exception as e:
             print(f"❌ Proxy Request Failed: {str(e)}")
             return {"responseCode": 1, "responseMessage": str(e), "data": None}
-
 khqr_instance = ProxyKHQR(
     token=os.getenv("BAKONG_TOKEN"),
     proxy_url=os.getenv("HONO_PROXY_URL"),
