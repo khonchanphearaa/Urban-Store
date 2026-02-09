@@ -1,5 +1,3 @@
-import axios from "axios";
-
 export const sendPaymentStatusTelegram = async (order, status) => {
   try {
     let header, statusText;
@@ -24,7 +22,7 @@ ${header}
 📦 <b>Items:</b>
 ${items}
 
-💰 <b>Amount:</b> <b>${(order.payment?.amount || 0).toLocaleString()} ៛</b>
+💰 <b>Final Amount:</b> <b>${(order.payment?.amount || 0).toLocaleString()} ៛</b>
 🚥 <b>Status:</b> <b>${statusText}</b>
 🔑 <b>MD5:</b> <code>${order.payment?.md5 || 'N/A'}</code>
 ━━━━━━━━━━━━━━━━━━
@@ -38,22 +36,7 @@ ${items}
       text: message,
       parse_mode: "HTML"
     });
-
   } catch (error) {
     console.error("Telegram Service Error:", error.message);
-  }
-};
-
-/* Technical Alert (For Bakong Token expiration or API downtime) */
-export const sendAdminAlert = async (message) => {
-  try {
-    const text = `<b>SYSTEM ALERT: BAKONG SERVICE</b>\n\n${message}\n\n ${new Date().toLocaleString()}`;
-    await axios.post(`https://api.telegram.org/bot${process.env.TG_BOT_TOKEN}/sendMessage`, {
-      chat_id: process.env.TG_CHAT_ID, 
-      text,
-      parse_mode: "HTML"
-    });
-  } catch (err) {
-    console.error("Telegram Admin Alert Error:", err.message);
   }
 };
