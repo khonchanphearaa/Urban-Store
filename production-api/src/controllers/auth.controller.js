@@ -152,6 +152,7 @@ export const sendOTPtoEmail = async (req, res) => {
       });
     res.status(200).json({ message: 'OTP sent to your email, Please check inbox' });
   } catch (error) {
+    console.error('SEND OTP ERROR:', error && error.message ? error.message : error);
     res.status(500).json({ message: 'Error sending OTP.' });
   }
 }

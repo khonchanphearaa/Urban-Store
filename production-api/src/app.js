@@ -17,10 +17,22 @@ connectDB();
 
 const app = express();
 
+
 /* Add Cron-Job.org */
 app.get('/ping', (req, res) =>{
   res.status(200).send('pong');
 })
+
+/* If the app is behind a proxy (nginx, load balancer, Heroku, etc.) enable trust proxy
+   This is required so express-rate-limit can correctly determine client IP from X-Forwarded-For.
+   Set TRUST_PROXY env var to 'true' (or a number/string) to enable, otherwise we enable by default in production. */
+if (process.env.TRUST_PROXY) {
+  const val = process.env.TRUST_PROXY === 'true' ? 1 : process.env.TRUST_PROXY;
+  app.set('trust proxy', val);
+} else if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 
 /* security headers */
 app.use(helmet());
