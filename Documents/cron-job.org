@@ -1,0 +1,41 @@
+
+    Cron-Job.org
+
+        On Render's Free Tier, services automatically "spin down" (go to sleep) after 15 minutes 
+    of inactivity. When a customer tries to pay and the service is sleeping, it takes about 1 minute 
+    to "wake up," which can cause timeouts or a bad user experience.
+
+    To keep your service awake 24/7 for free, you can use an external (Cron-Job.org) to "ping" 
+    your URL every few minutes so Render thinks there is active traffic.
+
+
+    ⚠️ Important: The 750-Hour Limit
+        Beause in e-commerce-api is have 2 service deploy, I just keep running awake 1 service product-api (Node.js)
+    - Render gives you 750 free hours per month.
+    - A month has 744 hours.
+    - If you keep one service awake 24/7, you use 744 hours (You are safe!).
+    - If you keep two services (Node + Python) awake 24/7, you use 1,488 hours.
+
+        **How to calculate your "Free Hours"Remember the math for your two services (Node.js + Python):
+        1 Service awake 24/7: $\approx 744$ hours/month (Safe)
+        2 Services awake 24/7: $\approx 1,488$ hours/month (Over Limit)
+
+    
+    1.SETUP How to keep it running forever without it being disabled
+        To prevent the "15 failures" rule from disabling your job, make sure your /ping route is as "light" as possible.
+
+        app.js OR index.js for root node that make sure is running services
+
+        app.get('/ping', (req, res) => {
+            res.status(200).send('pong');
+        });
+
+    
+    2.SETUP Config Cron-job.org
+        1. Log in to cron-job.org.
+        2. Create Cronjob:
+            + Title: Urban Store Node Awake
+            + Address: https://your-node-service.onrender.com/ping      <-- This baseUrls that you want to awak cron-jon.org
+            + Schedule: Select User-defined and enter: */14 * * * *
+            + Method: GET
+            + Save
