@@ -17,6 +17,11 @@ connectDB();
 
 const app = express();
 
+/* Add Cron-Job.org */
+app.get('/ping', (req, res) =>{
+  res.status(200).send('pong');
+})
+
 /* security headers */
 app.use(helmet());
 
