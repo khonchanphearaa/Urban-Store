@@ -1,0 +1,162 @@
+
+    Cloudflare Setup  
+
+        Cloudflare workers run at the "Edge". If your code on Render (USA) OR (Singapor) calls the works,
+    Cloudflare will usually run that worker in the USA, Singapor,... ,Not Cambodia. Bakong see a USA, 
+    IP and block you again. The idea!! Why don't we create a proxy and then route the request check transaction
+    to the hosted server in Cambodia?. Creative from Khmercoder @rachhen.
+
+    ++ Solution: Hono on Cloudflare + Smart Pleasement
+    To make this work for free, you must use Smart placement. This forces cloudflare to run your 
+    code as close to the Bakong Open API (Cambodia) as possible.
+
+
+    ⚠️ Note The first before useing with cloudflare needs create account
+    - Create account: https://dash.cloudflare.com/sign-up
+    - Create a free account
+    - When you see the dashboard, look for (Workers & Pages)
+
+    
+    
+    1.STEP Create the Proxy (Hono)
+      For the install this make sure in bakong-khqr-proxy
+
+      npm instsall hono
+ 
+    
+    2.STEP Create and Fix file: wrangler.toml
+      Config file to force the location
+
+      name = "bakong-proxy"
+      main = "src/index.ts"
+      compatibility_date = "2024-01-01"
+
+      [placement]
+      mode = "smart"      # <-- This forces the server to run near Cambodia
+
+    
+    3. Using Python (Quickest) for generate PROXY_SECRET Token,  Open terminal:
+
+      python -c "import secrets; print(secrets.token_hex(32))"
+
+    Expect Response:
+      68d850e514267459d6cc90e8af92ea210ffc3b0379c70063c@###
+
+    After pass this number in PROXY_SECRET 
+      
+    
+    4.STEP setup environment .dev.vars
+    +BAKONG_PROXY_URL
+    +PROXY_SECRET
+      
+      1. On terminal in bakong-khqr-proxy need to login cloudflare with wrangler your browwer will open 
+        Click (Allow) to give your computer permission.
+
+        npx wrangler login
+
+        Response:
+           ⛅️ wrangler 4.63.0
+          ───────────────────
+          Attempting to login via OAuth...
+          Opening a link in your default browser: 
+          https://dash.cloudflare.com/oauth2/auth?response_type=code&client_id=54d11594-84e4-41aa-b438-e81b8fa78ee7&redirect_uri=http%3A%2F%2Flocalhost%3A8976%
+          2Foauth%2Fcallback&scope=account%3Aread%20user%3Aread%20workers%3Awrite%20workers_kv%3Awrite%20workers_routes%3Awrite%20workers_scripts%3Awrite%20wor
+          kers_tail%3Aread%20d1%3Awrite%20pages%3Awrite%20zone%3Aread%20ssl_certs%3Awrite%20ai%3Awrite%20ai-search%3Awrite%20ai-search%3Arun%20queues%3Awrite%2
+          0pipelines%3Awrite%20secrets_store%3Awrite%20containers%3Awrite%20cloudchamber%3Awrite%20connectivity%3Aadmin%20offline_access&state=G-w0oC~ld4WxLCs0
+          -uFGP0i0DycDPDJ7&code_challenge=1s84jJ2MwBJC1GtkxrTa8-MjzRbAiRepMfm3NdD9hoo&code_challenge_method=S253923
+          Successfully logged in.
+      
+      2. Setup PROXY_SECRET 
+        Run this command and paste your secret token 
+
+        npx wrangler secret put PROXY_SECRET --name bakong-khqr-proxy
+
+        Response:
+         ⛅️ wrangler 4.63.0
+        ───────────────────
+        ✔ Enter a secret value: … ****************************************************************
+        🌀 Creating the secret for the Worker "bakong_khqr_proxy" 
+        ✔ There doesn't seem to be a Worker called "bakong_khqr_proxy". 
+
+      ** Waiting a miuntes ask: 
+        + Cloudflare is asking this because you haven't uploaded the code yet, So it doesn't "see"
+        the Worker in your dashboard. By sayign YES 
+
+        Response:
+        Do you want to create a new Worker with that name and add secrets to it? … yes
+      🌀 Creating new Worker "bakong_khqr_proxy"...
+      ✨ Success! Uploaded secret PROXY_SECRET
+
+    
+    5.STEP Deployed your proxy
+
+      npm run deploy
+
+      Response:
+      > bakong-khqr-proxy@1.0.0 deploy
+      > wrangler deploy src/index.ts
+
+      ⛅️ wrangler 3.114.17 (update available 4.63.0)
+      ---------------------------------------------------------
+
+      ▲ [WARNING] The version of Wrangler you are using is now out-of-date.
+
+        Please update to the latest version to prevent critical errors.
+        Run `npm install --save-dev wrangler@4` to update to the latest version.
+        After installation, run Wrangler with `npx wrangler`.
+
+        Total Upload: 63.25 KiB / gzip: 15.66 KiB
+        No bindings found.
+        Uploaded bakong-khqr-proxy (8.49 sec)
+        Deployed bakong-khqr-proxy triggers (1.64 sec)
+          https://bakong-khqr-proxy.khonchanphearaa.workers.dev
+        Current Version ID: 161a0fcb-88f2-4982-822b-e823caddd8a8
+
+    
+    
+    6.STEP Finally you can copy token and  proxy live on Cloudflare's global newtowrk
+      For store in file .env in Folder bakong_khqr_service
+    
+      BAKONG_PROXY_URL=68d850e5@@#####
+      PROXY_SECRET=https://bakong-khqr-proxy.khonchanphearaa.workers.dev
+
+      **The url proxy is your owner when to do with cloudflare proxy. 
+
+
+⚠️ Note when you deploy is have problem: Missing script because your (package.json) files hasn't 
+  saved with new command yet. 
+
+  JOSN Pakcage.json:
+
+    {
+      "name": "bakong_khqr_proxy",
+      "version": "1.0.0",
+      "type": "module",
+      "scripts": {
+        "deploy": "wrangler deploy src/index.ts"
+      },
+      "dependencies": {
+        "hono": "^4.0.0"
+      },
+      "devDependencies": {
+        "wrangler": "^3.0.0"
+      }
+    }
+
+  After deploy again.
+        
+
+    7.STEP Connect python service (Render)
+      .env in Bakong_khqr_service
+
+      BAKONG_PROXY_URL=https://bakong-proxy.@###.workers.dev/bakong
+      PROXY_SECRET=YOUR_SECRET_@##
+
+    
+    8.STEP Testing Bakong KHQR Servive in version beta 0.1.0 , OAS 3.1
+
+      https://urban-store-1-vdho.onrender.com/docs
+
+    **This my baseUrl testing bakong khqr service when completed already.
+
+

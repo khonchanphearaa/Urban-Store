@@ -3,7 +3,7 @@ import Payment from "../models/Payment.js";
 import { sendPaymentStatusTelegram, sendAdminAlert } from "../services/telegram.service.js";
 import axios from "axios";
 
-const CANCEL_AFTER_MS = 15 * 60 * 1000; // 15 Minutes (matching controller logic)
+const CANCEL_AFTER_MS = 5 * 60 * 1000; // 5 Minutes (matching controller logic)
 const CHECK_PAID_LIMIT_MS = 10 * 1000; // 10 seconds timeout
 const POLLER_INTERVAL_MS = 60000; // 60 seconds = 1 minute
 
@@ -45,22 +45,22 @@ export const startPaymentPolling = () => {
             );
 
             await sendPaymentStatusTelegram(order, "PAID");
-            console.log(`✅ Poller: Order ${order._id} reconciled as PAID from Payment record.`);
+            console.log(` Poller: Order ${order._id} reconciled as PAID from Payment record.`);
             continue;
           }
         } catch (err) {
-          console.error(`❌ Poller: reconciliation failed for order ${order._id}:`, err.message);
+          console.error(` Poller: reconciliation failed for order ${order._id}:`, err.message);
         }
 
         /* Skip if missing QR string or MD5 (can't verify without MD5) */
         if (!order.payment?.qrString) {
-          console.log(`⚠️ Poller: Order ${order._id} missing QR string, skipping...`);
+          console.log(`Poller: Order ${order._id} missing QR string, skipping...`);
           continue;
         }
 
-        /* ✅ FIX: Use stored MD5 hash instead of generating it */
+        /* FIX: Use stored MD5 hash instead of generating it */
         if (!order.payment?.md5) {
-          console.log(`⚠️ Poller: Order ${order._id} missing MD5 hash, skipping...`);
+          console.log(`Poller: Order ${order._id} missing MD5 hash, skipping...`);
           continue;
         }
 
@@ -68,12 +68,12 @@ export const startPaymentPolling = () => {
         if (order.telegramNotify === true) continue;
 
         try {
-          /* ✅ Use stored MD5 hash from database */
+          /* Use stored MD5 hash from database */
           const resp = await axios.post(
             `${process.env.PYTHON_BAKONG_URL}/check-payment`,
             {
               qr_string: order.payment.qrString,
-              md5_hash: order.payment.md5,  // ✅ Use stored MD5
+              md5_hash: order.payment.md5,  // Use stored MD5
             },
             {
               headers: { "Content-Type": "application/json" },
@@ -90,7 +90,7 @@ export const startPaymentPolling = () => {
             try {
               await sendAdminAlert(`Order: ${order._id}\nMessage: ${respMsg}\nAction: Please verify BAKONG_TOKEN in Python service.`);
             } catch (e) {
-              console.error(`❌ Poller: failed to send admin alert for order ${order._id}:`, e.message);
+              console.error(` Poller: failed to send admin alert for order ${order._id}:`, e.message);
             }
             continue;
           }
@@ -115,12 +115,12 @@ export const startPaymentPolling = () => {
             );
 
             await sendPaymentStatusTelegram(order, "PAID");
-            console.log(`✅ Poller: Order ${order._id} marked PAID with tx: ${txHash}`);
+            console.log(` Poller: Order ${order._id} marked PAID with tx: ${txHash}`);
           }
         } catch (e) {
           /* Don't fail the whole poller loop on one order/API error */
           console.error(
-            `❌ Poller: check-payment failed for order ${order._id}:`,
+            ` Poller: check-payment failed for order ${order._id}:`,
             e.response?.data?.responseMessage || e.message
           );
         }
@@ -171,12 +171,12 @@ export const startPaymentPolling = () => {
           /* If no DB proof, try Bakong check if qrString and MD5 available */
           if (order.payment?.qrString && order.payment?.md5) {
             try {
-              /* ✅ Use stored MD5 hash */
+              /* Use stored MD5 hash */
               const resp = await axios.post(
                 `${process.env.PYTHON_BAKONG_URL}/check-payment`,
                 {
                   qr_string: order.payment.qrString,
-                  md5_hash: order.payment.md5,  // ✅ Use stored MD5
+                  md5_hash: order.payment.md5,  // Use stored MD5
                 },
                 {
                   headers: { "Content-Type": "application/json" },
@@ -193,7 +193,7 @@ export const startPaymentPolling = () => {
                 try {
                   await sendAdminAlert(`Order pre-cancel check: ${order._id}\nMessage: ${respMsg}\nAction: Please verify BAKONG_TOKEN in Python service.`);
                 } catch (e) {
-                  console.error(`❌ Poller: failed to send admin alert for order ${order._id}:`, e.message);
+                  console.error(` Poller: failed to send admin alert for order ${order._id}:`, e.message);
                 }
                 continue;
               }
@@ -221,18 +221,18 @@ export const startPaymentPolling = () => {
                     { status: "PAID", txHash }
                   );
                   await sendPaymentStatusTelegram(updatedPaidOrder, "PAID");
-                  console.log(`✅ Poller: Order ${order._id} received late payment (Bakong) and marked PAID before cancel.`);
+                  console.log(` Poller: Order ${order._id} received late payment (Bakong) and marked PAID before cancel.`);
                   continue;
                 }
               }
             } catch (err) {
-              console.error(`❌ Poller: late-payment check failed for order ${order._id}:`, err.message);
+              console.error(` Poller: late-payment check failed for order ${order._id}:`, err.message);
             }
           } else {
-            console.log(`⚠️ Poller: Order ${order._id} missing QR or MD5, cannot verify before cancel`);
+            console.log(` Poller: Order ${order._id} missing QR or MD5, cannot verify before cancel`);
           }
         } catch (err) {
-          console.error(`❌ Poller: pre-cancel checks failed for order ${order._id}:`, err.message);
+          console.error(` Poller: pre-cancel checks failed for order ${order._id}:`, err.message);
         }
 
         /* Proceed with cancellation */
@@ -251,11 +251,11 @@ export const startPaymentPolling = () => {
         if (updatedOrder) {
           await Payment.updateOne({ orderId: order._id }, { status: "FAILED" });
           await sendPaymentStatusTelegram(updatedOrder, "CANCELLED");
-          console.log(`❌ Poller: Order ${order._id} auto-cancelled (expired after 15 minutes).`);
+          console.log(` Poller: Order ${order._id} auto-cancelled (expired after 15 minutes).`);
         }
       }
     } catch (error) {
-      console.error("❌ Poller Error:", error.message);
+      console.error(" Poller Error:", error.message);
     }
   }, POLLER_INTERVAL_MS);
 };
