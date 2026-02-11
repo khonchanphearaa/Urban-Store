@@ -1,12 +1,16 @@
 ## Decoupled architecture 
     ``` Base URLs ```serve as the foundational address that allow your Fronted
-    Node.js Backend, and Python Service to talk to each other.
+    Node.js Backend, and Python Service [Needs to handle on cloudlare ] to talk to each other.
 
 Deployed on (Render), URLs will change from [localhost] to production grade HTTPs links.
 
 1. The Fronted Base URLs (Client-Side)
 This is what user sees in theri. It communications with your Node.js API
-    @@ Production: https://urban-store-6gj1.onrender.com
+    @@ Production-api: https://urban-store-6gj1.onrender.com                <-- For production products
+        ++ Handle on productions 
+    @@ Bakong_khqr_service: https://urban-store-1-vdho.onrender.com     <-- For Bakong payments
+        ++ handle on Payment Bakong KHQR Service
+
     @@ Purpose: Used by the fronted (React/Vue/Mobile) to send login credentials, fetch products, and submit orders.
 
 2. The Node.js API Base URL (Server-Side)
@@ -14,36 +18,52 @@ If your backend is hosted separately or under a specific route, this is the root
     @@ Internal Routing Version One: /api/v1 
     @@ Endpoint Production: 
 
-        Endpoint	                Method	        Description
-        /api/v1/auth	            POST/GET	    Register, login users
-        /api/v1/products	        GET	Get         All products
-        /api/v1/products	        POST	        Create a product (form-data for images)
-        /api/v1/categories	        GET/POST	    Categories
-        /api/v1/cart	            GET/POST	    Cart actions
-        /api/v1/orders	            GET/POST	    Orders
-        /api/v1/payments/Bakong	    POST	        Payment processing [FAST api] get khqrString From bakong-khqr-service
-        /api/v1/payments/retry      POST            This retry again payment when expire 10 minute
-        /api/v1/payment/success     POST            Handle on Telegram Notify when payments successful (waiting handle...)
+        Endpoint	                          Method	    Description
+    ++ Auth User:
+        /api/v1/auth/register	              POST	        Create an account 
+        /api/v1/auth/login                    POST          ogin with exist account
+        /api/v1/auth/logout                   POST          Logout account
+        /api/v1/auth/forgot-password          POST          For forgot password can set password new again.
+        /api/v1/auth/verity-otp               POST          Vertify code OTP form Gmail 
+        /api/v1/auth/reset-password           POST          Change password new again
 
-3. The Python Service Base URL (Decoupled architecture )
-This is a private or internal URL. Your frontend usually never talks to this directly. Only your Node.js server talks to it.
-    @@ production: https://bakong-service-xxx.onrender.com
-    @@ Purpose: Handles KHQR generation and Bakong blockchain verification.
+    ++ Products 
+        /api/v1/products	                  GET	        Get all products in productions
+        /api/v1/products	                  POST	        Create a product by (Admin)
+        /api/v1/products/{{product_id}}       PUT           Update a product vai product_id by (Admin)
+        /api/v1/products/{{product_id}}       DELETE        Delete a product by (Admin)
+        /api/v1/products/addStock/{{id}}      POST          Add Stock for products by (Admin)
 
-4. Configuration in Code
-To keep your project flexible, you should never "hard-code" these URLs. Instead, use your (.env) files
+    ++ Categories
+        /api/v1/categories	                  GET	        Get all categories
+        /api/v1/categories                    POST          Create categories by (Admin)
+        /api/v1/categories/{{categories_id}}  PUT           Update a categories by (Admin)
+        /api/v1/categories/{{categories_id}}  DELETE        Delete an categories by (Admin)
+        
+    ++ Cart
+        /api/v1/cart/add	                  POST	        Create an cart
+        /api/v1/cart                          GET           Get all carts after create already
+        /api/v1/cart/update/{{cart_id}}       PUT           Update a cart
+        /api/v1/remove/{{cart_id}}            DELETE        Delete a cart
 
-    In (production-api/src/config/bakong.js)
-    @@This tells Node.js where the python service lives
+    ++ Orders
+        /api/v1/orders	                      POST/GET	    Create a orders && Get all orders
+        /api/v1/orders/{{order_id}}           GET           Get order by id
+        /api/v1/orders/{{order_id}}           PUT           Update orders status (PAIND, PENDING, CANCLEED) by Admin
+        
+    ++ Payments
+        /api/v1/payments/Bakong	              POST	        Payment processing [FAST api] get khqrString From bakong-khqr-service
+        /api/v1/payment/checkStatus           POST          Handle on Telegram Notify when payments successful is have status (PENDING, PAIND, CANCLEED)
+        /api/v1/payments/retry                POST          This retry again payment when expire 5 minute
+        
 
-    cconst BAKONG_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000';
-    export default BAKONG_SERVICE_URL;onst
 
-    In (bakong-python-service/main.py)
-    @@FastAPI needs to know which domains are allowed to talk to it (CORS)
+3. Render API service walkup make sure running 2 service testing in browser:
+    @@ Production: https://urban-store-6gj1.onrender.com 
+        Response:
+            { E-Commerce API running }
 
-    origins = [
-        "https://urban-store-6gj1.onrender.com",    # Your Node Backend
-        "http://localhost:3000",                    # Local Frontend
-    ]
+    @@ Bakong khqr service: https://urban-store-1-vdho.onrender.com 
+        Response:
+            { Bakong service running }
 
