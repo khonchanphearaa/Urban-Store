@@ -7,7 +7,10 @@ const userSchema = new mongoose.Schema({
   otp: {type: String},
   otpExpires: { type: Date },
   role: { type: String, enum: ["USER", "ADMIN"], default: "USER" },
-  refreshToken: { type: String }
+  refreshToken: { 
+    type: String, 
+    select: false   // Always hidden
+  },
 }, { timestamps: true });
 
 export default mongoose.model("User", userSchema);
