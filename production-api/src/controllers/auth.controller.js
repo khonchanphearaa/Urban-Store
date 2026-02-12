@@ -51,6 +51,7 @@ export const login = async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
+    /* Password back hidden field sign (+password) for use when field in User is select: false for implementation */
     const user = await User.findOne({ email: email.toLowerCase() }).select(
       "+password"
     );
@@ -205,6 +206,25 @@ export const resetpwd = async (req, res) =>{
     res.status(200).json({sucess: true, message: 'Password reset success'});
   } catch (error) {
     res.status(500).json({message: 'Error setting new password' });
+  }
+}
+//#endregion
+
+//#region Get Me
+export const getMe = async (req, res) =>{
+  try {
+    if(!req.user){
+      return res.status(401).json({message: 'Not authorized'});
+    }
+    const user = req.user.toObject();
+    delete user.refreshToken;
+    delete user.__v;
+    res.status(200).json({ 
+      sucess: true,
+      user: user
+    })
+  } catch (error) {
+    res.status(500).json({ message: "Server error fetching profile" });
   }
 }
 //#endregion
