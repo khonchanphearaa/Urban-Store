@@ -56,11 +56,11 @@ export const login = async (req, res) => {
       "+password"
     );
     if (!user || !user.password)
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: "Invalid Password" });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: "Invalid Password is not matched" });
 
     /* Access token & Generate token */
     const accessToken = generateAccessToken(user._id, user.role);
