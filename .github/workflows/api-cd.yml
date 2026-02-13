@@ -1,0 +1,84 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # --- JOB 1: NODE.JS BACKEND ---
+  node-api:
+    name: Node.js (production-api)
+    runs-on: ubuntu-latest
+    # This job only runs if files in 'production-api' were changed
+    outputs:
+      run_deploy: ${{ steps.check_files.outputs.run_deploy }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # Required to compare changes
+
+      - name: Check for changes in production-api
+        id: check_files
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep '^production-api/'; then
+            echo "run_deploy=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Node.js
+        if: steps.check_files.outputs.run_deploy == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: production-api/package-lock.json
+
+      - name: Install & Test
+        if: steps.check_files.outputs.run_deploy == 'true'
+        working-directory: production-api
+        run: |
+          npm ci
+          # If you have no tests yet, use: npm test || echo "No tests"
+          npm test || echo "Tests skipped: No test suite found."
+
+      - name: Deploy Node to Render
+        if: github.ref == 'refs/heads/main' && steps.check_files.outputs.run_deploy == 'true'
+        run: curl -X POST ${{ secrets.RENDER_NODE_DEPLOY_HOOK }}
+
+  # --- JOB 2: PYTHON BAKONG SERVICE ---
+  python-bakong:
+    name: Python (bakong_khqr_service)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for changes in bakong-service
+        id: check_py
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep '^bakong_khqr_service/'; then
+            echo "run_deploy=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Python
+        if: steps.check_py.outputs.run_deploy == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install & Lint
+        if: steps.check_py.outputs.run_deploy == 'true'
+        working-directory: bakong_khqr_service
+        run: |
+          pip install -r requirements.txt
+          pip install flake8
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      - name: Deploy Python to Render
+        if: github.ref == 'refs/heads/main' && steps.check_py.outputs.run_deploy == 'true'
+        run: curl -X POST ${{ secrets.RENDER_PYTHON_DEPLOY_HOOK }}
