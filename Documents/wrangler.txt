@@ -1,0 +1,19 @@
+
+    Wrangler 
+        Deploy Cloudlare Workers project, The wrangler.toml file is the identify and instruction
+    manual for your applications. It tell cloudlare who your Workers is and how it should behave.
+
+    + The Purpose: By setting a specific date, you are telling Cloudflare: "Please run my code using the rules and features that were stable on January 1st, 2024."
+    + Why it matters: If Cloudflare introduces a "breaking change" tomorrow (in 2026), your Worker won't break because it is safely locked to the 2024 behavior.
+    + When to change it: You only update this date when you want to use a new Cloudflare feature that was released after that date.
+    
+    
+    Key                           Purpose
+    name                          The name of Worker as it will appear in your cloudflare dashboard
+    main                          Tells Wrangler where your "entry point" file is (where your code starts).
+    [placement] mode = "smart"    Automatically moves your code to the data center closest to your users or your database to reduce lag.
+    [vars] (Optional)             Where you define public environment variables (not secrets).
+    [[kv_namespaces]]             Connects your code to a Cloudflare Database (KV storage).
+
+         
+        
