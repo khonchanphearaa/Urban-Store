@@ -14,13 +14,16 @@ export const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
     console.log("DECODED TOKEN:", decoded);
 
-    const user = await User.findById(decoded.id).select("-password");
+    const user = await User.findById(decoded.id).select("-password -refreshToken");
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
 
     req.user = user; 
     console.log("Auth user", res.user);
+
+    /* For debugging: log the user info attached to the request */
+    console.log("Auth user", req.user);
     
     next();
   } catch (error) {
