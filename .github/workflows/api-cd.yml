@@ -11,20 +11,20 @@ jobs:
   node-api:
     name: Node.js (production-api)
     runs-on: ubuntu-latest
-    # This job only runs if files in 'production-api' were changed
     outputs:
       run_deploy: ${{ steps.check_files.outputs.run_deploy }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2 # Required to compare changes
+          fetch-depth: 2
 
       - name: Check for changes in production-api
         id: check_files
+        shell: bash
         run: |
-          if git diff --name-only HEAD^ HEAD | grep '^production-api/'; then
-            echo "run_deploy=true" >> $GITHUB_OUTPUT
+          if git diff --name-only HEAD^ HEAD | grep -q '^production-api/'; then
+            echo "run_deploy=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Setup Node.js
@@ -33,14 +33,13 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: production-api/package-lock.json
+          cache-dependency-path: "production-api/package-lock.json"
 
       - name: Install & Test
         if: steps.check_files.outputs.run_deploy == 'true'
         working-directory: production-api
         run: |
           npm ci
-          # If you have no tests yet, use: npm test || echo "No tests"
           npm test || echo "Tests skipped: No test suite found."
 
       - name: Deploy Node to Render
@@ -59,9 +58,11 @@ jobs:
 
       - name: Check for changes in bakong-service
         id: check_py
+        shell: bash
         run: |
-          if git diff --name-only HEAD^ HEAD | grep '^bakong_khqr_service/'; then
-            echo "run_deploy=true" >> $GITHUB_OUTPUT
+          # Verify your folder is actually named 'bakong_khqr_service'
+          if git diff --name-only HEAD^ HEAD | grep -q '^bakong_khqr_service/'; then
+            echo "run_deploy=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Setup Python
