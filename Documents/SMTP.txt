@@ -1,0 +1,32 @@
+
+    SMIP (Simple Mail Transfer Protocol)
+
+        The standard internet protocol used for sending and transferring email messages between servers, 
+    acting as a digital post office for outgoing mail. It relies on TCP for reliable delivery 
+    and uses ports 587 or 465 for client submission, while IMAP/POP3 are used for receiving. 
+
+    - Security: Modern SMTP supports encryption via TLS to protect email transmission.
+
+    Key Point:
+        - Port 587/465: Used by mail client (like Outlook/Gmail) to submit outgoing 
+        - Port 25: Generally used for server-to-server relaying.
+
+
+        **The Problem when deploy in productions is not send OTP reason this project deploy in Render.com 
+    is blocked SMTP (As of late 2025) all outbound SMTP traffic (Prot: 25, 465 and 587) on their Free Tier web services.
+    
+    ++ When handle Nodemailer is working provide for send OTP in Localhost. But for handle to other Servers Non-blocked.
+
+
+    1.STEP Create account Bervo 
+        - In dasborad, choice SMTP & API
+        - Generate a new SMTP Key
+    @@ Example: 
+        + BREVO_API_KEY=xkeysib-90c7f@######
+        + BREVO_SENDER_EMAIL=youremail@gmail.com    <-- This email that vertify with Bervo 
+
+
+    Bervo Free Plan
+        Service             Need Domain             Works on Render
+        Bervo               No                      Yes
+        Nodemailer          No                      Blocked
