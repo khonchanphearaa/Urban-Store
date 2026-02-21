@@ -11,6 +11,12 @@ const userSchema = new mongoose.Schema({
     type: String, 
     select: false   // Always hidden
   },
+  wishlist: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+    }
+  ]
 }, { timestamps: true });
 
 export default mongoose.model("User", userSchema);
