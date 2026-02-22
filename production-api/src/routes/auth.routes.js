@@ -1,10 +1,11 @@
 import express from "express";
-import { register, login, logout, refreshToken, sendOTPtoEmail, verifyOTP, resetpwd, getMe, updateProfile } from "../controllers/auth.controller.js";
+import { register, login, logout, refreshToken, sendOTPtoEmail, verifyOTP, resetpwd, getMe, updateProfile, getAllUsers } from "../controllers/auth.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 import { registerValidator } from "../validators/auth.validator.js";
 import { validate } from "../middlewares/validate.js";
 import { registerLimiter, loginLimiter } from "../middlewares/authLimiter.js";
 import { uploadAvatar } from "../config/cloudinary.js";
+import { isAdmin } from "../middlewares/admin.middleware.js";
 
 const router = express.Router();
 
@@ -28,6 +29,9 @@ router.put("/update-profile", protect, (req, res, next) => {
     next();
   });
 }, updateProfile);
+
+/* Get all list users by admin */
+router.get("/list-users", protect, isAdmin, getAllUsers);
 export default router;
     
 
