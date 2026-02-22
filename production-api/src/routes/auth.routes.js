@@ -1,9 +1,10 @@
 import express from "express";
-import { register, login, logout, refreshToken, sendOTPtoEmail, verifyOTP, resetpwd, getMe } from "../controllers/auth.controller.js";
+import { register, login, logout, refreshToken, sendOTPtoEmail, verifyOTP, resetpwd, getMe, updateProfile } from "../controllers/auth.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 import { registerValidator } from "../validators/auth.validator.js";
 import { validate } from "../middlewares/validate.js";
 import { registerLimiter, loginLimiter } from "../middlewares/authLimiter.js";
+import { uploadAvatar } from "../config/cloudinary.js";
 
 const router = express.Router();
 
@@ -15,6 +16,18 @@ router.post("/forgot-password", sendOTPtoEmail);
 router.post("/verity-otp", verifyOTP);
 router.post("/reset-password", resetpwd);
 router.get("/getMe", protect, getMe);
+router.put("/update-profile", protect, (req, res, next) => {
+  uploadAvatar.single("avatar")(req, res, (err) => {
+    if (err) {
+      /* Handle upload errors */
+      return res.status(400).json({ 
+        success: false, 
+        message: err.message 
+      });
+    }
+    next();
+  });
+}, updateProfile);
 export default router;
     
 

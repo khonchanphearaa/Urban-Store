@@ -16,7 +16,14 @@ const userSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
     }
-  ]
+  ],
+  avatar:{
+    url: {
+      type: String,
+      default: "https://res.cloudinary.com/demo/image/upload/d_avatar.png/v1/user_default.png"
+    },
+    public_id: { type: String, default: null }
+  }
 }, { timestamps: true });
 
 export default mongoose.model("User", userSchema);

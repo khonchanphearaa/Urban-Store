@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { generateAccessToken, generateRefreshToken } from "../config/jwt.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { generateOTP } from "../utils/generateOTP.js";
+import { v2 as cloudinary } from "cloudinary";
 
 /* Register (USER Only) */
 export const register = async (req, res) => {
@@ -218,6 +219,8 @@ export const getMe = async (req, res) =>{
     }
     const user = req.user.toObject();
     delete user.refreshToken;
+    delete user.otp;
+    delete user.otpExpires;
     delete user.__v;
     res.status(200).json({ 
       sucess: true,
@@ -228,3 +231,77 @@ export const getMe = async (req, res) =>{
   }
 }
 //#endregion
+
+//#region  Update Profile
+export const updateProfile = async (req, res)=>{
+  try {
+    
+    /* Check user if authenticated */
+    if(!req.user){
+      return res.status(401).json({message: 'Not authorized'});
+    }
+    const {name, email, currentPassword, newPassword} = req.body;
+    const user = await User.findById(req.user._id).select('+password');
+    if(!user){
+      return res.status(404).json({message: 'User not found'});
+    }
+    
+    /* Update text field */
+    if(name) user.name = name;
+    if(email && email.toLowerCase() !== user.email){
+      const emailExists = await User.findOne({email: email.toLowerCase()});
+      if(emailExists){
+        return res.status(400).json({message: 'Email already in used'});
+      }
+      user.email = email.toLowerCase();
+    }
+
+    /* Update password */
+    if(newPassword){
+      if(!currentPassword){
+        return res.status(400).json({message: 'Current password is required to set new password'});
+      }
+
+      /* verify current pwd */
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if(!isMatch){
+        return res.status(400).json({message: 'Current password does not match'});
+      }
+
+      /* hash and save new password */
+      const salt = await bcrypt.genSalt(12);
+      user.password = await bcrypt.hash(newPassword, salt);
+    }
+    
+    /* Update avatar */
+    if(req.file){
+      if(user.avatar?.public_id){
+        await cloudinary.uploader.destroy(user.avatar.public_id);
+      }
+      user.avatar = {
+        url: req.file.path,
+        public_id: req.file.filename
+      };
+    }
+    await user.save();
+
+    /* When susccess response */
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar?.url,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error("UPDATE ERROR:", error);
+    res.status(500).json({ message: "Server error during update" });
+  }
+    
+}
+//#endregion
+

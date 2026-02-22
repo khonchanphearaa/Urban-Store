@@ -30,4 +30,35 @@ export const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
+
+/**
+ * @AvatarUpdload
+ * for user profile pictures
+ */
+const avatarStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "ecommerce/avatars", 
+    allowed_formats: ["jpg", "jpeg", "png"],
+    transformation: [{ width: 500, height: 500, crop: "fill", gravity: "face" }] 
+  },
+});
+
+/* check extions images */
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
+  
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Invalid extension images. Only JPG, JPEG, and PNG are allowed!"), false);
+  }
+};
+
+export const uploadAvatar = multer({ 
+  storage: avatarStorage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB is plenty for an avatar
+  fileFilter: fileFilter
+});
+
 export default cloudinary;
