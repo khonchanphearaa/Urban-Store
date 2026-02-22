@@ -305,3 +305,19 @@ export const updateProfile = async (req, res)=>{
 }
 //#endregion
 
+
+//#region Get all list users by admin
+export const getAllUsers = async (req, res) =>{
+  try {
+    const users = await User.find().select('-password -refreshToken -otp -otpExpires -__v');
+    res.status(200).json({ 
+      success: true,
+      message: "Get all list users success.",
+      users: users
+    })
+  } catch (error) {
+    console.error("GET ALL USERS ERROR:", error);
+    res.status(500).json({ message: "Server error fetching user list" });
+  }
+}
+//#endregion
