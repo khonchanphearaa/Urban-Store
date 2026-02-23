@@ -136,29 +136,3 @@ export const getOrderById = async (req, res) => {
     order: orderResponse(order),
   });
 };
-
-
-// UPDATE Order Status (Admin)
-export const updateOrderStatus = async (req, res) => {
-  try {
-    const { status } = req.body;
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ message: "Order not found" });
-
-    if (!["PAID", "SHIPPED", "CANCELLED"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status" });
-    }
-
-    order.status = status;
-
-    if (status === "PAID") {
-      order.isPaid = true;
-      order.paidAt = new Date();
-    }
-
-    await order.save();
-    res.json({ message: "Order updated", order });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
