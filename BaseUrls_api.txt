@@ -26,6 +26,7 @@ If your backend is hosted separately or under a specific route, this is the root
         /api/v1/auth/forgot-password          POST          For forgot password can set password new again.
         /api/v1/auth/verity-otp               POST          Vertify code OTP form Gmail 
         /api/v1/auth/reset-password           POST          Change password new again
+        /api/v1/auth/getMe                    GET           For get information user
 
     ++ Products 
         /api/v1/products	                  GET	        Get all products in productions
@@ -33,6 +34,8 @@ If your backend is hosted separately or under a specific route, this is the root
         /api/v1/products/{{product_id}}       PUT           Update a product vai product_id by (Admin)
         /api/v1/products/{{product_id}}       DELETE        Delete a product by (Admin)
         /api/v1/products/addStock/{{id}}      POST          Add Stock for products by (Admin)
+        /api/v1/products/wishlist/{{id}}      POST          Add to wishlist production your fav
+        /api/v1/product/wishlist/{{id}}       DELETE        Delete wishlist
 
     ++ Categories
         /api/v1/categories	                  GET	        Get all categories
