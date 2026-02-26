@@ -12,6 +12,7 @@ import categoryRoutes from "./routes/category.routes.js";
 import cartRoutes from "./routes/cart.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
+import aiAgent from "./routes/ai.routes.js";
 
 connectDB();
 
@@ -67,6 +68,7 @@ app.use("/api/v1/categories", categoryRoutes);  // raw JSON
 app.use("/api/v1/cart", cartRoutes);            // raw JSON
 app.use("/api/v1/orders", orderRoutes);         // raw JSON
 app.use("/api/v1/payments", paymentRoutes);     // raw JSON
+app.use("/api/v1/ai", aiAgent); 
 
 /* Health Check */
 app.get("/", (req, res) => res.json({ message: "E-Commerce API running" }));

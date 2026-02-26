@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
+/* Protect for handle veritfy Token before starting */
 export const protect = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 

@@ -13,6 +13,7 @@
   "license": "ISC",
   "description": "The ecommerce API provides backend services for an online store",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "axios": "^1.13.2",
     "bakong-khqr": "^1.0.20",
     "bcryptjs": "^3.0.3",
