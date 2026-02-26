@@ -1,23 +1,31 @@
 # Bakong-khqr-Service
 
-This service is a dedicated Bakong KHQR payment microservice used to generate Dynamic KHQR codes for e-commerce payments in Cambodia.
-It is designed to work together with a main backend (e.g. ecommerce-api) and follows NBC Bakong KHQR standards.
+This service is a dedicated Bakong KHQR payment used to generate Dynamic KHQR codes for e-commerce payments in Cambodia.
+It is designed to work together with a main backend (e.g. ecommerce-api) and follows ```NBC (National Bank of Cambodia)``` Bakong KHQR standards.
+
+This documentation read more about [Bakong Open API](https://api-bakong.nbc.gov.kh/document)
 
 ## Setup Enviroment 
 
 ```bash
-BAKONG_TOKEN=eyJhbGey.....xhcNnPLWRtTOrn
-MERCHANT_NAME=YOUR_BRAND_STORE
-MERCHANT_CITY=ADDRESS_CITY
-BANK_ACCOUNT=YOUR_MERCHANT_ID
-BANK_PHONE_NUMBER=855123456  #Phone number contact with Bakong account app
+BAKONG_TOKEN=eyJhbGciOiJIUz@@@########
 
-NODE_API_BASE_URL=http://localhost:{{PORT}}/api/v1
+MERCHANT_NAME=Urban
+MERCHANT_CITY=Phnom Penh ## Default Phnom Penh
+BANK_ACCOUNT=khonc@@@#####
+BANK_PHONE_NUMBER=855@#####   # Phone number conect with Bakong account app
+NODE_API_BASE_URL=https://urban-store-6gj1.onrender.com/api/v1
 
-# {{PORT}} GET PORT Form production-api EXAMPLE: PORT=5052
+# Proxy URL for Bakong khqr-Service
+# Deployed with Cloudflare Workers
+HONO_PROXY_URL=https://bakong-khqr-proxy.khonchanphearaa.workers.dev    
+PROXY_SECRET=68d850e51426@@#######
 ```
 
 ## Setup Enviroment project python
+
+This run project local
+
 1. Navigate to your project
 - Open the Terminal and use the cd (change directory) 
 
