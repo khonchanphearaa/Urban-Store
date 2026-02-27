@@ -64,8 +64,8 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid Password is not matched" });
 
     /* Access token & Generate token */
-    const accessToken = generateAccessToken(user._id, user.role);
-    const refreshToken = generateRefreshToken(user._id);
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
     user.refreshToken = refreshToken;
     await user.save();
@@ -107,7 +107,7 @@ export const refreshToken = async (req, res) => {
       return res.sendStatus(403);
     }
 
-    const newAccessToken = generateAccessToken(user._id, user.role);
+    const newAccessToken = generateAccessToken(user);
     res.json({ accessToken: newAccessToken });
   } catch {
     res.sendStatus(403);
