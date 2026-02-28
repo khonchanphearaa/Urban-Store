@@ -6,6 +6,35 @@ import { sendEmail } from "../utils/sendEmail.js";
 import { generateOTP } from "../utils/generateOTP.js";
 import { v2 as cloudinary } from "cloudinary";
 
+/* Support fallback for non-browser clients */
+const isProduction = process.env.NODE_ENV === "production";
+const refreshCookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
+  path: "/",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
+const getRefreshTokenFromRequest = (req) => {
+  const cookieToken = req.cookies?.refreshToken;
+  if (cookieToken) return cookieToken;
+
+  const headerToken = req.headers["x-refresh-token"];
+  if (headerToken) return headerToken;
+
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith("Bearer ")) {
+    return authHeader.slice(7).trim();
+  }
+
+  if (req.body?.refreshToken) {
+    return req.body.refreshToken;
+  }
+
+  return null;
+};
+
 /* Register (USER Only) */
 export const register = async (req, res) => {
   try {
@@ -44,7 +73,7 @@ export const register = async (req, res) => {
   }
 };
 
-// Login
+/* Login */
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -70,12 +99,7 @@ export const login = async (req, res) => {
     user.refreshToken = refreshToken;
     await user.save();
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+    res.cookie("refreshToken", refreshToken, refreshCookieOptions);
 
     res.json({
       message: "Login success",
@@ -94,29 +118,34 @@ export const login = async (req, res) => {
   }
 };
 
-// Refresh Token
+/* Refresh Token */
 export const refreshToken = async (req, res) => {
-  const token = req.cookies.refreshToken;
-  if (!token) return res.sendStatus(401);
+  const token = getRefreshTokenFromRequest(req)?.trim();
+  if (!token) {
+    return res.status(401).json({ message: "Refresh token missing. Please login again." });
+  }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.id).select("+refreshToken");
 
     if (!user || user.refreshToken !== token) {
-      return res.sendStatus(403);
+      return res.status(403).json({ message: "Refresh token invalid or replaced. Please login again." });
     }
 
     const newAccessToken = generateAccessToken(user);
     res.json({ accessToken: newAccessToken });
-  } catch {
-    res.sendStatus(403);
+  } catch (error) {
+    if (error?.name === "TokenExpiredError") {
+      return res.status(403).json({ message: "Refresh token expired. Please login again." });
+    }
+    return res.status(403).json({ message: "Refresh token verification failed." });
   }
 }
 
-// Logout
+/* Logout */
 export const logout = async (req, res) => {
-  const token = req.cookies.refreshToken;
+  const token = getRefreshTokenFromRequest(req);
 
   if (token) {
     const user = await User.findOne({ refreshToken: token });
@@ -126,7 +155,12 @@ export const logout = async (req, res) => {
     }
   }
 
-  res.clearCookie("refreshToken");
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
+  });
   res.json({ message: "Logout success (client removes token)" });
 };
 
