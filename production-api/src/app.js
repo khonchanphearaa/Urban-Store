@@ -68,7 +68,7 @@ app.use(rateLimit({
 }));
 
 /* CORS */
-app.use(cors(corsOptions));
+app.use(cors({ origin: "*", credentials: true }));
 
 /* Body Parsers */
 app.use(express.json({ limit: "10kb" }));
