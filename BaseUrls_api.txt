@@ -23,6 +23,7 @@ If your backend is hosted separately or under a specific route, this is the root
         /api/v1/auth/register	              POST	        Create an account 
         /api/v1/auth/login                    POST          ogin with exist account
         /api/v1/auth/logout                   POST          Logout account
+        /api/v1/auth/refresh-token            POST          Refresh token 
         /api/v1/auth/forgot-password          POST          For forgot password can set password new again.
         /api/v1/auth/verity-otp               POST          Vertify code OTP form Gmail 
         /api/v1/auth/reset-password           POST          Change password new again
@@ -58,6 +59,11 @@ If your backend is hosted separately or under a specific route, this is the root
         /api/v1/payments/Bakong	              POST	        Payment processing [FAST api] get khqrString From bakong-khqr-service
         /api/v1/payment/checkStatus           POST          Handle on Telegram Notify when payments successful is have status (PENDING, PAIND, CANCLEED)
         /api/v1/payments/retry                POST          This retry again payment when expire 5 minute
+
+    ++ Ai agent 
+        /api/v1/ai/chat                       POST          New chat ai agent asking something
+        /api/v1/ai/chat/history               GET           Chat history 
+        /api/v1/ai/chat/history               DELETE        Clear history chat
         
 
 
