@@ -3,7 +3,7 @@ import Payment from "../models/Payment.js";
 import { sendPaymentStatusTelegram, sendAdminAlert } from "../services/telegram.service.js";
 import axios from "axios";
 
-const CANCEL_AFTER_MS = 5 * 60 * 1000; // 5 Minutes (matching controller logic)
+const CANCEL_AFTER_MS = 2 * 60 * 1000; // 2 Minutes (matching controller logic)
 const CHECK_PAID_LIMIT_MS = 10 * 1000; // 10 seconds timeout
 const POLLER_INTERVAL_MS = 60000; // 60 seconds = 1 minute
 
@@ -34,7 +34,6 @@ export const startPaymentPolling = () => {
               status: "PAID",
               txHash: paymentRecord.txHash || order.payment?.txHash || "confirmed"
             };
-            order.telegramNotify = true;
             await order.save();
             await Payment.findOneAndUpdate(
               { orderId: order._id },
@@ -45,6 +44,8 @@ export const startPaymentPolling = () => {
             );
 
             await sendPaymentStatusTelegram(order, "PAID");
+            order.telegramNotify = true;
+            await order.save();
             console.log(` Poller: Order ${order._id} reconciled as PAID from Payment record.`);
             continue;
           }
@@ -103,7 +104,7 @@ export const startPaymentPolling = () => {
             order.status = "PAID";
             order.payment.status = "PAID";
             order.payment.txHash = txHash;
-            order.telegramNotify = true;
+            order.markModified('payment');
             await order.save();
 
             await Payment.findOneAndUpdate(
@@ -115,6 +116,8 @@ export const startPaymentPolling = () => {
             );
 
             await sendPaymentStatusTelegram(order, "PAID");
+            order.telegramNotify = true;
+            await order.save();
             console.log(` Poller: Order ${order._id} marked PAID with tx: ${txHash}`);
           }
         } catch (e) {
