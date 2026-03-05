@@ -41,6 +41,7 @@ export const createPayment = async (req, res) => {
       qrString: qrData.qr_string,
       md5: qrData.md5,  
       hash,
+      qrGeneratedAt: new Date(),
     };
 
     /* Important for Mongoose to track object updates */
@@ -96,7 +97,10 @@ export const checkPaymentStatus = async (req, res) => {
           status: "PAID",
           txHash: paymentRecord.txHash || order.payment?.txHash || paymentRecord.hash || "confirmed"
         };
-        order.telegramNotify = true;
+        if (!order.telegramNotify) {
+          await sendPaymentStatusTelegram(order, "PAID");
+          order.telegramNotify = true;
+        }
         await order.save();
         return res.json({ success: true, status: "PAID" });
       }
@@ -222,11 +226,12 @@ export const checkPaymentStatus = async (req, res) => {
       return res.json({ success: true, status: "PAID", txHash: possibleTx });
     }
 
-    /* Logic for AUTO-CANCEL after 15 minutes */
-    const minutesSinceCreated = (Date.now() - new Date(order.createdAt).getTime()) / 60000;
+    /* Logic for AUTO-CANCEL after 2 minutes */
+    const qrTime = order.payment?.qrGeneratedAt || order.createdAt;
+    const minutesSinceCreated = (Date.now() - new Date(qrTime).getTime()) / 60000;
     
-    console.log(`Time elapsed: ${minutesSinceCreated.toFixed(2)} minutes (limit: 15 minutes)`);
-    if (minutesSinceCreated > 15) { 
+    console.log(`Time elapsed: ${minutesSinceCreated.toFixed(2)} minutes (limit: 2 minutes)`);
+    if (minutesSinceCreated > 2) { 
       console.log("Payment expired - cancelling order");
       order.status = "CANCELLED";
       order.payment.status = "FAILED";
@@ -322,8 +327,10 @@ export const retryPayment = async (req, res) => {
       qrString: qrData.qr_string,
       md5: qrData.md5, 
       hash,
+      qrGeneratedAt: new Date(),
     };
 
+    order.markModified('payment');
     await order.save();
 
     await Payment.create({
